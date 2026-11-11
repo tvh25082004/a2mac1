@@ -1,0 +1,11 @@
+*.zip
+*.stl
+download/
+a2mac1-repo/
+tool-results/
+data/embed_cache/
+data/chunk-*.js
+scripts/.env
+__pycache__/
+*.pyc
+.DS_Store
