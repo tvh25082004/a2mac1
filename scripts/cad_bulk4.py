@@ -10,7 +10,7 @@ BASE = "https://ibp.a2mac1.com"
 DATA = Path("/home/z/my-project/data")
 DL = Path("/home/z/my-project/download")
 START = time.time()
-TIME_LIMIT = 900
+TIME_LIMIT = 540
 CHUNK_TARGET = 90e6
 raw = (Path(__file__).parent / ".env").read_text().split("A2MAC1_TOKEN=")[1].split("\n")[0].strip().strip("'")
 TOK = re.search(r"access_token=([^;\s]+)", raw).group(1)
