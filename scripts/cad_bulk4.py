@@ -10,7 +10,7 @@ BASE = "https://ibp.a2mac1.com"
 DATA = Path("/home/z/my-project/data")
 DL = Path("/home/z/my-project/download")
 START = time.time()
-TIME_LIMIT = 480
+TIME_LIMIT = 900
 CHUNK_TARGET = 90e6
 raw = (Path(__file__).parent / ".env").read_text().split("A2MAC1_TOKEN=")[1].split("\n")[0].strip().strip("'")
 TOK = re.search(r"access_token=([^;\s]+)", raw).group(1)
@@ -37,11 +37,19 @@ def main():
     skip_data = json.load(open(DATA / "cad_skip_list.json"))
     done = set(skip_data["done_files"])
     manifest_all = skip_data.setdefault("manifest", {})
+    # quét chunk đã có -> dùng làm de-dup tên file (resume qua nhiều phiên)
+    names_in_chunks = set()
+    for p in DL.glob("DATA-CAD_*.zip"):
+        try:
+            names_in_chunks |= set(nm.split("/")[-1] for nm in zipfile.ZipFile(p).namelist() if nm.endswith(".stl"))
+        except Exception:
+            p.unlink(missing_ok=True)  # chunk hỏng do bị kill giữa chừng -> xóa đi tạo lại
+    done |= names_in_chunks
     chunk_num = next_chunk_num()
-    log(f"resume {len(done)} file | chunk bắt đầu: {chunk_num:02d} | token {left()}s")
+    log(f"resume {len(done)} file tên | chunk bắt đầu: {chunk_num:02d} | token {left()}s")
     tmp = Path("/tmp/cad4"); tmp.mkdir(exist_ok=True)
-    cars = json.load(open(DATA / "cad_priority.json"))[:2]
-    BAN = [False]
+    cars = json.load(open(DATA / "cad_priority.json"))[:8]
+    BAN = [False]; AUTH = [False]
 
     def dl(it, carname):
         try:
@@ -49,6 +57,8 @@ def main():
             r = S.get(f"{BASE}/files/downloads/files", params={"token": it["token"], "api-version": "1.1"}, timeout=(10, 150))
             if r.status_code == 403:
                 BAN[0] = True; return None
+            if r.status_code == 401:
+                AUTH[0] = True; return None
             if r.status_code != 200 or len(r.content) < 500:
                 return None
             m = re.search(r"filename=([^;]+)", r.headers.get("content-disposition", ""))
@@ -60,13 +70,13 @@ def main():
             return None
 
     for car in cars:
-        if left() < 60 or BAN[0] or shutil.disk_usage("/home/z/my-project").free < 0.8e9:
+        if left() < 60 or BAN[0] or AUTH[0] or shutil.disk_usage("/home/z/my-project").free < 0.8e9:
             break
         pid, name = car["id"], car["name"]
         log(f"== {name} ==")
         recs = get_files(pid)
         if not recs:
-            log("get-files lỗi (403?) -> dừng phiên"); break
+            log("get-files lỗi (403/hết token/không có 3D) -> dừng phiên"); break
         seen, uniq = set(), []
         for r in recs:
             if r.get("token") and r["id"] not in seen:
@@ -85,24 +95,34 @@ def main():
         ex.shutdown(wait=False)
         zf = None
         zpath = DL / f"DATA-CAD_{chunk_num:02d}.zip"
-        zf = zipfile.ZipFile(zpath, "a" if zpath.exists() else "w", zipfile.ZIP_DEFLATED, compresslevel=6)
-        chunk_bytes = sum(i.compress_size for i in zipfile.ZipFile(zpath).infolist()) if zpath.exists() else 0
+        try:
+            chunk_bytes = sum(i.compress_size for i in zipfile.ZipFile(zpath).infolist()) if zpath.exists() else 0
+            zf = zipfile.ZipFile(zpath, "a" if zpath.exists() else "w", zipfile.ZIP_DEFLATED, compresslevel=6)
+        except Exception:
+            zpath.unlink(missing_ok=True)
+            chunk_bytes = 0
+            zf = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6)
         for fu in futs:
-            if left() < 50 or BAN[0] or shutil.disk_usage("/home/z/my-project").free < 0.8e9:
+            if left() < 50 or BAN[0] or AUTH[0] or shutil.disk_usage("/home/z/my-project").free < 0.8e9:
                 if BAN[0]: log("403 -> dừng car")
+                if AUTH[0]: log("401 token hết hạn -> dừng phiên")
                 for f2 in futs: f2.cancel()
                 break
             res = fu.result()
             if not res: continue
             carname, fname, p, size, meta = res
+            if fname in names_in_chunks:
+                p.unlink(missing_ok=True); continue  # đã có từ phiên trước
             zf.write(p, f"{carname}/{fname}")
-            zname_len = size
             p.unlink(missing_ok=True)
+            names_in_chunks.add(fname)
             mf["ids"].append(meta.get("part") or fname)
             mf["files"].append({"file": f"{carname}/{fname}", **meta, "size": size})
             done.add(fname)
-            chunk_bytes += zname_len
+            chunk_bytes += size
             n_ok += 1
+            if n_ok % 50 == 0:  # lưu tiến độ liên tục để resume an toàn
+                (DATA / "cad_skip_list.json").write_text(json.dumps(skip_data, ensure_ascii=False, indent=1))
             if chunk_bytes > CHUNK_TARGET:
                 zf.writestr("_MANIFEST.json", json.dumps({"batch": zpath.name, "note": "xem data/cad_skip_list.json để lấy manifest đầy đủ"}, ensure_ascii=False))
                 zf.close()
