@@ -1,6 +1,6 @@
-"""CAD v3: tải STL của VF6/VF8 stream thẳng vào DATA-CAD.zip (tải xong 1 file -> đưa vào zip -> xóa raw).
-URL đúng: https://ibp.a2mac1.com/files/downloads/files?token=<tok>&api-version=1.1 (KHÔNG có /api).
-Guard: zip <= 1.8GB, thời gian 460s, disk free > 1GB.
+"""CAD v3: stream VF6/VF8 STLs straight into DATA-CAD.zip (download 1 file -> put into zip -> delete raw).
+Correct URL: https://ibp.a2mac1.com/files/downloads/files?token=<tok>&api-version=1.1 (NO /api prefix).
+Guards: zip <= 1.8GB, 320s time limit, free disk > 1GB.
 """
 import re, json, time, shutil, zipfile, os, random, threading
 from pathlib import Path
@@ -20,7 +20,7 @@ H = {"Authorization": f"Bearer {TOK}", "Cookie": f"access_token={TOK}",
 S = requests.Session(); S.headers.update(H)
 
 def left(): return TIME_LIMIT - (time.time() - START)
-def log(*a): print(f"[{time.strftime('%H:%M:%S')}|còn {left():.0f}s]", *a, flush=True)
+def log(*a): print(f"[{time.strftime('%H:%M:%S')}|{left():.0f}s left]", *a, flush=True)
 
 def get_files(pid, hid):
     r = S.post(f"{BASE}/api/visual/files/get-files", params={"api-version": "2.0"},
@@ -41,18 +41,18 @@ def main():
             skip |= set(nm.split("/")[-1] for nm in zipfile.ZipFile(zp).namelist() if nm.endswith(".stl"))
         except Exception:
             pass
-    log(f"skip: {len(skip)} file đã có từ các part/zip cũ")
-    if ZIP_PATH.exists():  # resume: đọc file đã có trong zip
+    log(f"skip: {len(skip)} files already in old parts/zips")
+    if ZIP_PATH.exists():  # resume: read files already in the zip
         try:
             skip = set(nm.split("/")[-1] for nm in zipfile.ZipFile(ZIP_PATH).namelist() if nm.endswith(".stl"))
             zf.close()
             zf = zipfile.ZipFile(ZIP_PATH, "a", zipfile.ZIP_DEFLATED, compresslevel=6)
-            log(f"resume: {len(skip)} file đã trong zip")
+            log(f"resume: {len(skip)} files already in zip")
         except Exception:
             pass
 
     def dl(it, carname):
-        """Tải 1 file -> tmp -> trả (carname, fname, path, size, meta)."""
+        """Download 1 file -> tmp -> return (carname, fname, path, size, meta)."""
         try:
             time.sleep(0.15)
             r = S.get(f"{BASE}/files/downloads/files",
@@ -80,13 +80,13 @@ def main():
         log(f"== {name} ({pid[-10:]}) ==")
         recs = get_files(pid, "00000003LSK4EU01")
         if not recs:
-            log("get-files lỗi -> dừng"); break
+            log("get-files error -> stop"); break
         seen, uniq = set(), []
         for r in recs:
             if r.get("token") and r["id"] not in seen:
                 seen.add(r["id"]); uniq.append(r)
         recs = uniq
-        log(f"{len(recs)} file unique")
+        log(f"{len(recs)} unique files")
         manifest[name] = {"product": pid, "hierarchy": "00000003LSK4EU01 (3D AutoReverse)",
                           "total_files": len(recs), "files": [], "incomplete": False}
         n_ok = n_mb = 0
@@ -97,7 +97,7 @@ def main():
         for fu in futs:
             if left() < 45 or zbytes > ZIP_CAP or shutil.disk_usage("/home/z/my-project").free < 1.0e9 or BAN[0]:
                 if BAN[0]:
-                    log("403 giữa chừng -> dừng car này")
+                    log("403 mid-way -> stop this car")
                 for f2 in futs: f2.cancel()
                 manifest[name]["incomplete"] = True
                 break
@@ -115,13 +115,13 @@ def main():
             n_ok += 1; n_mb += size
             if n_ok % 25 == 0:
                 log(f"  {n_ok} file | zip-in {zbytes/1e6:.0f}MB | disk free {shutil.disk_usage('/home/z/my-project').free/1e9:.1f}GB")
-        log(f"{name}: {n_ok}/{len(recs)} file, {n_mb/1e6:.0f}MB nguồn")
+        log(f"{name}: {n_ok}/{len(recs)} files, {n_mb/1e6:.0f}MB source")
     zf.close()
-    # manifest vào zip
+    # manifest into the zip
     with zipfile.ZipFile(ZIP_PATH, "a", zipfile.ZIP_DEFLATED) as z2:
         z2.writestr("_MANIFEST.json", json.dumps(manifest, ensure_ascii=False, indent=1))
     shutil.rmtree(tmp, ignore_errors=True)
-    log(f"XONG: {ZIP_PATH} {ZIP_PATH.stat().st_size/1e6:.0f}MB")
+    log(f"DONE: {ZIP_PATH} {ZIP_PATH.stat().st_size/1e6:.0f}MB")
 
 if __name__ == "__main__":
     main()

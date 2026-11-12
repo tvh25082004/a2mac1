@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe nhanh các nguồn data bổ sung: full-props, BOM, 3D, datatables."""
+"""Quick probe of additional data sources: full-props, BOM, 3D, datatables."""
 import os, re, json, sys, time
 from pathlib import Path
 import requests
@@ -50,12 +50,12 @@ r = t("compare FULL (hideMapped=false)", "POST", "/api/products/compare/data/by-
 if r.status_code == 200:
     d = r.json()
     nprops = sum(len(g["properties"]) for g in d["propertyGroups"])
-    print(f"   ==> propertyGroups: {len(d['propertyGroups'])}, tổng props: {nprops}")
+    print(f"   ==> propertyGroups: {len(d['propertyGroups'])}, total props: {nprops}")
     for g in d["propertyGroups"]:
         print(f"      - {g['propertyGroupName']}: {len(g['properties'])}")
     v = d["values"].get(ids[0], {})
     filled = sum(1 for k, vv in v.items() if isinstance(vv, dict) and any((vv.get(s) for s in vv)))
-    print(f"   xe 1 có giá trị cho {filled}/{nprops} props")
+    print(f"   vehicle 1 has values for {filled}/{nprops} props")
 t("bom/product", "GET", f"/api/products/bom/{ids[0]}")
 t("bom/product POST", "POST", f"/api/products/bom/{ids[0]}", {})
 t("compare/bom", "POST", "/api/products/compare/bom", ids)

@@ -25,7 +25,7 @@ def brief(r, n=500):
     print(f"    HTTP {r.status_code} len={len(t)}: {t[:n]}")
     print()
 
-# 1. picker: lấy product kèm projectId/scenarioId
+# 1. picker: fetch the product with projectId/scenarioId
 body = {"filters": [], "sorter": None, "page": {"number": 1, "size": 3},
         "dataContext": None, "resourceId": None, "withOwnerShip": False,
         "includesMappingProductTypeData": False}

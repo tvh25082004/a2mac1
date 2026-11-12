@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Debug: vì sao COUNTA trả về n+1 cho mỗi sheet hãng."""
+"""Debug: why COUNTA returns n+1 for each brand sheet."""
 from pathlib import Path
 from openpyxl import load_workbook
 

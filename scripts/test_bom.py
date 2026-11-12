@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BOM columns + datatables + chart-data — tìm nguồn bảng thông số thật."""
+"""BOM columns + datatables + chart-data — find the real source of spec tables."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests
@@ -30,7 +30,7 @@ print("== BOM BillOfMaterial_Columns ==")
 r = S.post(f"{BASE}/api/products/bom/BillOfMaterial_Columns", json={"productIds": [PID]}, timeout=120)
 brief(r, 1200)
 
-print("== datatables của xe ==")
+print("== datatables of the vehicle ==")
 r = S.post(f"{BASE}/api/products/{PID}/datatables", json={"filters": [], "page": {"number": 1, "size": 10}, "search": "", "sorter": None}, timeout=60)
 brief(r, 800)
 

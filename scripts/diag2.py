@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diag v2: thử các endpoint đọc specs khả dụng trước khi token chết."""
+"""Diag v2: try the endpoints that read available specs before the token dies."""
 import os, re, json, time
 from pathlib import Path
 import requests
@@ -27,29 +27,29 @@ def show(tag, r, maxlen=700):
     print(txt[:maxlen].replace("\n", " "))
     print()
 
-# 1. FULL danh sách hierarchies của 1 xe
+# 1. FULL list of hierarchies of one vehicle
 r = S.get(f"{BASE}/api/products/{PID}/hierarchies", timeout=60)
 try:
     hiers = r.json()
-    print(f"HIERARCHIES của {PID}: {[ (h.get('id'), h.get('name')) for h in hiers ]}")
+    print(f"HIERARCHIES of {PID}: {[ (h.get('id'), h.get('name')) for h in hiers ]}")
 except Exception:
     show("hierarchies", r)
 
 hid = hiers[0]["id"] if r.status_code == 200 and hiers else "A000005AE6M1EU01"
 
-# 2. searchable-properties theo hierarchy
+# 2. searchable-properties per hierarchy
 r = S.get(f"{BASE}/api/products/{PID}/hierarchies/{hid}/searchable-properties", timeout=60)
 show(f"searchable-properties [{hid}]", r, 900)
 
-# 3. cây node của hierarchy đầu tiên (trực tiếp, không parentNodeId)
+# 3. node tree of the first hierarchy (direct, without parentNodeId)
 r = S.post(f"{BASE}/api/hierarchies/{hid}", json={}, timeout=60)
 show(f"tree [{hid}]", r, 900)
 
-# 4. compare set hiện tại của user
+# 4. current compare set of the user
 r = S.get(f"{BASE}/api/compare/items", timeout=60)
 show("compare/items", r, 400)
 
-# 5. available-data của product theo hierarchy
+# 5. available-data of the product per hierarchy
 r = S.post(f"{BASE}/api/products/{PID}/available-data", json={"filters": []},
            params={"hierarchyId": hid, "checkSimilarity": "false"}, timeout=60)
 show("available-data", r, 600)

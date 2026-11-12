@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Cào thông số chi tiết TOÀN BỘ xe qua api/products/compare/data/by-products.
-Batch 25 xe, resume bằng spec_state.json, retry chờ session warm-up."""
+"""Crawl detailed specs for ALL vehicles via api/products/compare/data/by-products.
+Batches of 25 vehicles, resume via spec_state.json, retry waiting for session warm-up."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests
@@ -34,7 +34,7 @@ for p in products:
         ids.append(pid)
         names[pid] = p.get("resourceName", "")
 todo = [i for i in ids if i not in st["done"]]
-print(f"Tổng xe: {len(ids)} | đã xong: {len(st['done'])} | còn: {len(todo)}", flush=True)
+print(f"Total vehicles: {len(ids)} | done: {len(st['done'])} | remaining: {len(todo)}", flush=True)
 B_DIR.mkdir(exist_ok=True)
 
 batch_idx = len(st["batches"])
@@ -53,17 +53,17 @@ for start in range(0, len(todo), 25):
         if r.status_code == 200:
             data = r.json(); ok = True; break
         if r.status_code in (401, 403):
-            print(f"  batch {batch_idx} HTTP {r.status_code} — chờ 4s retry (session warm-up)...", flush=True)
+            print(f"  batch {batch_idx} HTTP {r.status_code} — waiting 4s to retry (session warm-up)...", flush=True)
             time.sleep(4); continue
         if r.status_code == 429:
-            print(f"  batch {batch_idx} 429 — chờ 10s", flush=True)
+            print(f"  batch {batch_idx} 429 — waiting 10s", flush=True)
             time.sleep(10); continue
         if r.status_code >= 500:
-            print(f"  batch {batch_idx} {r.status_code} — chờ 4s", flush=True)
+            print(f"  batch {batch_idx} {r.status_code} — waiting 4s", flush=True)
             time.sleep(4); continue
-        sys.exit(f"HTTP {r.status_code} tại batch {batch_idx}: {r.text[:200]}")
+        sys.exit(f"HTTP {r.status_code} at batch {batch_idx}: {r.text[:200]}")
     if not ok:
-        sys.exit(f"batch {batch_idx} thất bại sau 7 lần — chạy lại lệnh này để resume")
+        sys.exit(f"batch {batch_idx} failed after 7 attempts — rerun this command to resume")
     out = B_DIR / f"batch_{batch_idx:04d}.json"
     out.write_text(json.dumps(data, ensure_ascii=False))
     got = sum(1 for c in chunk if c in (data.get("values") or {}))
@@ -71,7 +71,7 @@ for start in range(0, len(todo), 25):
     st["batches"].append(out.name)
     F_STATE.write_text(json.dumps(st, ensure_ascii=False, indent=1))
     el = time.time() - t0
-    print(f"  batch {batch_idx}: {got}/{len(chunk)} xe có values ({el:.0f}s) -> {out.name}", flush=True)
+    print(f"  batch {batch_idx}: {got}/{len(chunk)} vehicles with values ({el:.0f}s) -> {out.name}", flush=True)
     time.sleep(0.4)
 
-print(f"==> XONG. Tổng xe đã cào: {len(st['done'])}", flush=True)
+print(f"==> DONE. Total vehicles crawled: {len(st['done'])}", flush=True)

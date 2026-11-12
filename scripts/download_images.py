@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tải toàn bộ ảnh xe A2MAC1 (blob public, không cần auth). Resume được."""
+"""Download all A2MAC1 vehicle images (public blobs, no auth needed). Resumable."""
 import json, re, time, sys
 from pathlib import Path
 import requests
@@ -9,7 +9,7 @@ OUT = Path("/home/z/my-project/download/A2MAC1_anh_xe")
 OUT.mkdir(parents=True, exist_ok=True)
 
 products = json.loads((DATA / "products_all.json").read_text())
-print("xe:", len(products))
+print("vehicles:", len(products))
 
 def safe_name(s):
     s = re.sub(r'[\\/:*?"<>|]+', "-", str(s)).strip()
@@ -48,4 +48,4 @@ for i, p in enumerate(products, 1):
         print(f"  {i}/{len(products)} | ok={ok} skip={skip} fail={fail} | {time.time()-t0:.0f}s", flush=True)
     time.sleep(0.12)
 
-print(f"==> XONG: ok={ok} skip={skip} fail={fail} | {time.time()-t0:.0f}s | thư mục: {OUT}")
+print(f"==> DONE: ok={ok} skip={skip} fail={fail} | {time.time()-t0:.0f}s | folder: {OUT}")

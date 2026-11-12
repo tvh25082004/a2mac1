@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test nhanh: auth + ảnh riêng tư + parts filter nhiều xe."""
+"""Quick test: auth + private images + parts filter for multiple vehicles."""
 import os, re, json, time
 from pathlib import Path
 import requests
@@ -23,7 +23,7 @@ S.headers.update({
 r = S.get(BASE + "/api/products/quick-search?q=Audi&limit=2", timeout=30)
 print("1) auth:", r.status_code, len(r.content))
 
-# 2) ảnh riêng tư: /files/downloads/files?token=<pictureToken>
+# 2) private images: /files/downloads/files?token=<pictureToken>
 products = json.loads((DATA / "products_all.json").read_text())
 p = next(x for x in products if x["productId"] == "A000006XCOMIEU01")
 pf = p["pictureFile"]
@@ -37,13 +37,13 @@ for pat in ["/files/downloads/files", "/api/files/downloads/files"]:
         print("   SAVED /tmp/priv_img.jpg")
         break
 
-# 3) parts filter 1 xe vs nhiều xe (OR)
+# 3) parts filter 1 vehicle vs multiple vehicles (OR)
 HID = "A000005AE6M1EU01"
 body1 = {"filters": ["product-id eq A0000004F0UTEU02"], "sorter": None, "page": {"number": 1, "size": 50}}
 r = S.post(BASE + f"/api/hierarchies/{HID}/parts", json=body1,
            params={"allowDynamicColumns": "true", "hideMappedProperties": "true"},
            timeout=60)
-print("3a) parts 1 xe:", r.status_code, len(r.content))
+print("3a) parts 1 vehicle:", r.status_code, len(r.content))
 if r.status_code == 200:
     d = r.json(); print("   rows:", len(d.get("rows", [])))
 

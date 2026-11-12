@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test XSRF: lấy cookie XSRF-TOKEN rồi gửi header X-XSRF-TOKEN cho các POST."""
+"""Test XSRF: fetch the XSRF-TOKEN cookie then send the X-XSRF-TOKEN header on POSTs."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests
@@ -21,15 +21,15 @@ S.headers.update({
 })
 BASE = "https://ibp.a2mac1.com"
 
-# 1. GET nào đó để nhận Set-Cookie XSRF-TOKEN
+# 1. Some GET to receive the Set-Cookie XSRF-TOKEN
 r0 = S.get(f"{BASE}/api/compare/items", timeout=60)
-print("cookies hiện có:", [c.name for c in S.cookies])
+print("current cookies:", [c.name for c in S.cookies])
 xsrf = S.cookies.get("XSRF-TOKEN")
 print("XSRF-TOKEN:", (xsrf[:30] + "...") if xsrf else None)
 
 if xsrf:
     S.headers["X-XSRF-TOKEN"] = xsrf
-    print("\n== POST compare/item CÓ XSRF ==")
+    print("\n== POST compare/item WITH XSRF ==")
     r = S.post(f"{BASE}/api/compare/item",
                json={"is3d": False, "item": {"itemId": PID}}, timeout=60)
     print("HTTP", r.status_code, "|", (r.text or "")[:400])

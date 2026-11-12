@@ -1,5 +1,5 @@
-"""CAD v4: tải thẳng vào các chunk DATA-CAD_NN.zip (~90MB), không dùng master.
-Resume từ data/cad_skip_list.json. Tiếp tục đánh số chunk sau phần cuối cùng.
+"""CAD v4: download straight into DATA-CAD_NN.zip chunks (~90MB), no master zip.
+Resume from data/cad_skip_list.json. Continue chunk numbering after the last part.
 """
 import re, json, time, shutil, zipfile, os, random, threading
 from pathlib import Path
@@ -19,7 +19,7 @@ H = {"Authorization": f"Bearer {TOK}", "Cookie": f"access_token={TOK}",
 S = requests.Session(); S.headers.update(H)
 
 def left(): return TIME_LIMIT - (time.time() - START)
-def log(*a): print(f"[{time.strftime('%H:%M:%S')}|còn {left():.0f}s]", *a, flush=True)
+def log(*a): print(f"[{time.strftime('%H:%M:%S')}|{left():.0f}s left]", *a, flush=True)
 
 def next_chunk_num():
     n = 0
@@ -37,16 +37,16 @@ def main():
     skip_data = json.load(open(DATA / "cad_skip_list.json"))
     done = set(skip_data["done_files"])
     manifest_all = skip_data.setdefault("manifest", {})
-    # quét chunk đã có -> dùng làm de-dup tên file (resume qua nhiều phiên)
+    # scan existing chunks -> use for filename de-dup (resume across sessions)
     names_in_chunks = set()
     for p in DL.glob("DATA-CAD_*.zip"):
         try:
             names_in_chunks |= set(nm.split("/")[-1] for nm in zipfile.ZipFile(p).namelist() if nm.endswith(".stl"))
         except Exception:
-            p.unlink(missing_ok=True)  # chunk hỏng do bị kill giữa chừng -> xóa đi tạo lại
+            p.unlink(missing_ok=True)  # chunk corrupted because killed mid-way -> delete and recreate
     done |= names_in_chunks
     chunk_num = next_chunk_num()
-    log(f"resume {len(done)} file tên | chunk bắt đầu: {chunk_num:02d} | token {left()}s")
+    log(f"resume {len(done)} file names | starting chunk: {chunk_num:02d} | token {left()}s")
     tmp = Path("/tmp/cad4"); tmp.mkdir(exist_ok=True)
     cars = json.load(open(DATA / "cad_priority.json"))[:8]
     BAN = [False]; AUTH = [False]
@@ -76,16 +76,16 @@ def main():
         log(f"== {name} ==")
         recs = get_files(pid)
         if not recs:
-            log("get-files lỗi (403/hết token/không có 3D) -> dừng phiên"); break
+            log("get-files error (403/token expired/no 3D) -> end session"); break
         seen, uniq = set(), []
         for r in recs:
             if r.get("token") and r["id"] not in seen:
                 seen.add(r["id"]); uniq.append(r)
         todo = [r for r in uniq if not any(r["id"] in e.get("id", "##") for e in manifest_all.get(name, {}).get("files", [])) ]
-        # đơn giản hơn: so theo tên file dự đoán không ổn -> dùng id
+        # simpler: matching by predicted filename is unreliable -> use ids
         done_ids = set(manifest_all.get(name, {}).get("ids", []))
         todo = [r for r in uniq if r["id"] not in done_ids]
-        log(f"{len(uniq)} file unique, còn cần tải: {len(todo)}")
+        log(f"{len(uniq)} unique files, still to download: {len(todo)}")
         mf = manifest_all.setdefault(name, {"product": pid, "total_files": len(uniq),
                                             "hierarchy": "00000003LSK4EU01 (3D AutoReverse)",
                                             "ids": list(done_ids), "files": []})
@@ -104,15 +104,15 @@ def main():
             zf = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6)
         for fu in futs:
             if left() < 50 or BAN[0] or AUTH[0] or shutil.disk_usage("/home/z/my-project").free < 0.8e9:
-                if BAN[0]: log("403 -> dừng car")
-                if AUTH[0]: log("401 token hết hạn -> dừng phiên")
+                if BAN[0]: log("403 -> stop car")
+                if AUTH[0]: log("401 token expired -> end session")
                 for f2 in futs: f2.cancel()
                 break
             res = fu.result()
             if not res: continue
             carname, fname, p, size, meta = res
             if fname in names_in_chunks:
-                p.unlink(missing_ok=True); continue  # đã có từ phiên trước
+                p.unlink(missing_ok=True); continue  # already present from an earlier session
             zf.write(p, f"{carname}/{fname}")
             p.unlink(missing_ok=True)
             names_in_chunks.add(fname)
@@ -121,12 +121,12 @@ def main():
             done.add(fname)
             chunk_bytes += size
             n_ok += 1
-            if n_ok % 50 == 0:  # lưu tiến độ liên tục để resume an toàn
+            if n_ok % 50 == 0:  # save progress continuously for safe resume
                 (DATA / "cad_skip_list.json").write_text(json.dumps(skip_data, ensure_ascii=False, indent=1))
             if chunk_bytes > CHUNK_TARGET:
-                zf.writestr("_MANIFEST.json", json.dumps({"batch": zpath.name, "note": "xem data/cad_skip_list.json để lấy manifest đầy đủ"}, ensure_ascii=False))
+                zf.writestr("_MANIFEST.json", json.dumps({"batch": zpath.name, "note": "see data/cad_skip_list.json for the full manifest"}, ensure_ascii=False))
                 zf.close()
-                log(f"  đóng {zpath.name} ({chunk_bytes/1e6:.0f}MB, {n_ok} file phiên này)")
+                log(f"  close {zpath.name} ({chunk_bytes/1e6:.0f}MB, {n_ok} files this session)")
                 chunk_num += 1
                 zpath = DL / f"DATA-CAD_{chunk_num:02d}.zip"
                 zf = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6)
@@ -138,14 +138,14 @@ def main():
                 else:
                     zf.writestr("_MANIFEST.json", json.dumps({"batch": zpath.name}, ensure_ascii=False))
                     zf.close()
-                    log(f"  đóng {zpath.name} ({chunk_bytes/1e6:.0f}MB)")
+                    log(f"  close {zpath.name} ({chunk_bytes/1e6:.0f}MB)")
             except Exception:
                 pass
-        log(f"{name}: +{n_ok} file phiên này")
+        log(f"{name}: +{n_ok} files this session")
     skip_data["done_files"] = sorted(done)
     (DATA / "cad_skip_list.json").write_text(json.dumps(skip_data, ensure_ascii=False, indent=1))
     shutil.rmtree(tmp, ignore_errors=True)
-    log(f"KẾT THÚC: tổng {len(done)} file đã có trong chunks")
+    log(f"FINISHED: {len(done)} files total now in chunks")
 
 if __name__ == "__main__":
     main()

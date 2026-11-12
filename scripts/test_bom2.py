@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BOM đúng chuẩn: POST api/products/bom/{columnset} body đầy đủ. Lưu ngay khi thành công."""
+"""Proper BOM: POST api/products/bom/{columnset} with a full body. Save immediately on success."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests

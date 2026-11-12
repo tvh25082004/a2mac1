@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ALL-IN-ONE foreground: packages + get-files + teardown cho 621 xe. Lưu stream, resume."""
+"""ALL-IN-ONE foreground: packages + get-files + teardown for 621 vehicles. Stream saves, resumable."""
 import os, re, json, time, sys
 from pathlib import Path
 from collections import Counter
@@ -53,7 +53,7 @@ pkgs_all = json.loads(pkgs_f.read_text())
 pkgs_by_pid = {}
 for pk in pkgs_all:
     pkgs_by_pid.setdefault(pk["productId"], []).append(pk)
-print("PKGS XONG:", len(pkgs_all), "gói /", len(pkgs_by_pid), "xe", flush=True)
+print("PKGS DONE:", len(pkgs_all), "packages /", len(pkgs_by_pid), "vehicles", flush=True)
 
 # ---- get-files ----
 if STEP in ("all", "files"):
@@ -102,15 +102,15 @@ if STEP in ("all", "files"):
         for i, f in enumerate(as_completed(futs), 1):
             pid, rec = f.result()
             if rec == "AUTH401":
-                print("AUTH401 files — dừng", flush=True); dead_flag = True; break
+                print("AUTH401 files — stopping", flush=True); dead_flag = True; break
             res[pid] = rec
             if rec.get("files"):
                 n_ok += 1
             if i % 30 == 0:
                 out_f.write_text(json.dumps(res))
-                print(f"files {i}/{len(todo)} cófile={n_ok} {time.time()-t0:.0f}s", flush=True)
+                print(f"files {i}/{len(todo)} withfile={n_ok} {time.time()-t0:.0f}s", flush=True)
     out_f.write_text(json.dumps(res))
-    print("FILES XONG:", len(res), "xe,", n_ok, "xe có file 3D/CAD", flush=True)
+    print("FILES DONE:", len(res), "vehicles,", n_ok, "vehicles with 3D/CAD files", flush=True)
 
 # ---- teardown ----
 if STEP in ("all", "teardown"):
@@ -139,7 +139,7 @@ if STEP in ("all", "teardown"):
         for i, f in enumerate(as_completed(futs), 1):
             pid, d = f.result()
             if d == "AUTH401":
-                print("AUTH401 teardown — dừng", flush=True); break
+                print("AUTH401 teardown — stopping", flush=True); break
             state["rows"][pid] = d
             state["done"][pid] = 0 if d == "FAIL" else 1
             if i % 60 == 0:
@@ -147,5 +147,5 @@ if STEP in ("all", "teardown"):
                 print(f"teardown {i}/{len(todo)} {time.time()-t0:.0f}s", flush=True)
     st_f.write_text(json.dumps(state))
     ok = sum(1 for v in state["done"].values() if v)
-    print("TEARDOWN XONG:", ok, "/", len(all_pids), flush=True)
+    print("TEARDOWN DONE:", ok, "/", len(all_pids), flush=True)
 print("DONE STEP=", STEP, flush=True)

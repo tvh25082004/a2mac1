@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phân tích offline: head 32 cột của parts, tree hierarchy, cấu trúc part row."""
+"""Offline analysis: 32-column head of parts, hierarchy tree, part row structure."""
 import json
 from pathlib import Path
 
@@ -9,10 +9,10 @@ D = Path("/home/z/my-project/data")
 p = D / "hier_parts_sample.json"
 if p.exists():
     d = json.loads(p.read_text())
-    print("=== HEAD 32 cột của parts ===")
+    print("=== HEAD: 32 columns of parts ===")
     for h in d["head"]:
         print(f"   {h['id'][:26]:26} | {h['type']:12} | {h.get('value')}")
-    print("\n=== 3 row mẫu ===")
+    print("\n=== 3 sample rows ===")
     for row in d["rows"][:3]:
         data = row["data"]
         print(f"row id: {row['id']}")
@@ -24,7 +24,7 @@ if p.exists():
                     print(f"   {k[:26]:26} -> {str(fv)[:60]} (orig {str(ov)[:30]})")
                 elif fv is not None:
                     print(f"   {k[:26]:26} -> {str(fv)[:60]}")
-    print("tổng rows trang 1:", len(d["rows"]))
+    print("total rows page 1:", len(d["rows"]))
 
 # 2) tree hierarchy
 p = D / "hierarchy_tree.json"
@@ -37,17 +37,17 @@ if p.exists():
     lv = {}
     for n in nodes:
         lv[n["level"]] = lv.get(n["level"], 0) + 1
-    print("   theo level:", lv)
+    print("   by level:", lv)
 
 # 3) hierarchies 3d
 p = D / "hierarchies_3d.json"
 if p.exists():
     d = json.loads(p.read_text())
-    print(f"\n=== hierarchies-3d: {len(d)} mục ===")
+    print(f"\n=== hierarchies-3d: {len(d)} items ===")
     for x in d[:10]:
         print(f"   {x['id']} | {x['value']}")
 
-# 4) parts theo product
+# 4) parts by product
 p = D / "parts_by_product_sample.json"
 if p.exists():
     d = json.loads(p.read_text())

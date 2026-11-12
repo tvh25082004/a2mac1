@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Probe nhanh các endpoint POST để kiểm tra (1) token còn được server chấp nhận không, (2) body đúng dạng gì.
-KHÔNG in token."""
+"""Quick probe of POST endpoints to check (1) whether the token is still accepted by the server, (2) what body shape is correct.
+Do NOT print the token."""
 import os, re, json, time
 from pathlib import Path
 import requests

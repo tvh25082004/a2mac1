@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Crawler A2MAC1 IBP — lấy full danh sách xe + thông số kỹ thuật.
-Có resume: chạy dở với token cũ, gửi token mới là chạy tiếp từ chỗ dừng.
-KHÔNG in token ra màn hình.
+Crawler A2MAC1 IBP — fetch the full vehicle list + tech specs.
+Resumable: if interrupted with an old token, supply a new token and it continues from where it stopped.
+Do NOT print the token to the screen.
 
-Chạy:
-  python crawl_a2mac1.py products            # bước 1: full danh sách xe
-  python crawl_a2mac1.py compare             # bước 2: thông số kỹ thuật (batch 25 xe)
-  python crawl_a2mac1.py all                 # cả 2 bước
+Run:
+  python crawl_a2mac1.py products            # step 1: full vehicle list
+  python crawl_a2mac1.py compare             # step 2: tech specs (batches of 25 vehicles)
+  python crawl_a2mac1.py all                 # both steps
   python crawl_a2mac1.py products --page-size 500
 """
 import os, re, json, time, sys, base64, argparse
@@ -60,26 +60,26 @@ def call(method, path, body=None, params=None, retries=4):
                       allow_redirects=False, timeout=180)
         if r.status_code == 429:
             wait = 5 * (i + 1)
-            print(f"  [429] chờ {wait}s...", flush=True)
+            print(f"  [429] waiting {wait}s...", flush=True)
             time.sleep(wait)
             continue
         if r.status_code in (401, 403):
-            sys.exit("TOKEN_DEAD: server từ chối token (401/403). Cần token mới từ trình duyệt.")
+            sys.exit("TOKEN_DEAD: server rejected the token (401/403). A new token from the browser is needed.")
         if r.status_code in (301, 302, 303, 307, 308):
-            sys.exit(f"REDIRECT: {r.headers.get('Location')} — phiên hết hạn?")
+            sys.exit(f"REDIRECT: {r.headers.get('Location')} — session expired?")
         if r.status_code >= 500:
             print(f"  [{r.status_code}] retry {i+1}...", flush=True)
             time.sleep(3)
             continue
         if r.status_code >= 400:
-            sys.exit(f"HTTP {r.status_code} tại {path}: {r.text[:300]}")
+            sys.exit(f"HTTP {r.status_code} at {path}: {r.text[:300]}")
         time.sleep(DELAY)
         return r.json() if r.content and (r.headers.get("content-type", "").lower().find("json") >= 0 or (r.text or "")[:1] in "{[") else (r.text if r.content else None)
-    sys.exit("Quá số lần retry")
+    sys.exit("Out of retries")
 
 
 def step_products(page_size, max_pages):
-    """Phân trang api/visual/products để lấy toàn bộ products."""
+    """Page through api/visual/products to fetch all products."""
     all_items = []
     for page in range(1, max_pages + 1):
         body = {"filters": [], "sorter": None, "page": {"number": page, "size": page_size}}
@@ -95,7 +95,7 @@ def step_products(page_size, max_pages):
             if not items and isinstance(data.get("products"), dict):
                 items = data["products"].get("items", [])
         n = len(items)
-        print(f"  page {page}: {n} sản phẩm", flush=True)
+        print(f"  page {page}: {n} products", flush=True)
         if n == 0:
             break
         all_items.extend(items)
@@ -103,8 +103,8 @@ def step_products(page_size, max_pages):
             break
         F_PRODUCTS.write_text(json.dumps(all_items, ensure_ascii=False, indent=1))
     F_PRODUCTS.write_text(json.dumps(all_items, ensure_ascii=False, indent=1))
-    print(f"==> TỔNG {len(all_items)} sản phẩm -> {F_PRODUCTS}", flush=True)
-    # in thử structure của 1 item
+    print(f"==> TOTAL {len(all_items)} products -> {F_PRODUCTS}", flush=True)
+    # print a sample of one item's structure
     if all_items:
         print("  [sample keys]:", ", ".join(list(all_items[0].keys())[:25]), flush=True)
     return all_items
@@ -122,12 +122,12 @@ def pick_ids(products):
 def step_compare(batch_size=25):
     st = load_state()
     if not F_PRODUCTS.exists():
-        sys.exit("Chưa có products_all.json — chạy `products` trước.")
+        sys.exit("products_all.json missing — run `products` first.")
     products = json.loads(F_PRODUCTS.read_text())
     ids = pick_ids(products)
-    print(f"Số productId: {len(ids)}", flush=True)
+    print(f"productId count: {len(ids)}", flush=True)
     todo = [i for i in ids if i not in st["done_item_ids"]]
-    print(f"Còn phải lấy: {len(todo)}", flush=True)
+    print(f"Still to fetch: {len(todo)}", flush=True)
     F_COMPARE_DIR.mkdir(exist_ok=True)
     batch_idx = len(st["batches"])
     for start in range(0, len(todo), batch_size):
@@ -140,7 +140,7 @@ def step_compare(batch_size=25):
         except SystemExit:
             raise
         except Exception as e:
-            print(f"  [lỗi batch {batch_idx}]: {e} — thử lại 1 lần sau 5s", flush=True)
+            print(f"  [batch {batch_idx} error]: {e} — retrying once after 5s", flush=True)
             time.sleep(5)
             data = call("POST", "/api/products/compare/data/by-items", body,
                         params={"hideMappedProperties": "true", "hideMappedProductTypesProperties": "false"})
@@ -149,21 +149,21 @@ def step_compare(batch_size=25):
         st["done_item_ids"].extend(chunk)
         st["batches"].append(str(out.name))
         save_state(st)
-        print(f"  batch {batch_idx}: {len(chunk)} xe -> {out.name}", flush=True)
-    print(f"==> HOÀN TẤT so sánh thông số. Tổng batch: {len(st['batches'])}", flush=True)
+        print(f"  batch {batch_idx}: {len(chunk)} vehicles -> {out.name}", flush=True)
+    print(f"==> SPEC COMPARE COMPLETE. Total batches: {len(st['batches'])}", flush=True)
 
 
 def step_dump(batch_size=50):
-    """Dump FULL dữ liệu product qua api/input/products/data (batch productIds)."""
+    """Dump FULL product data via api/input/products/data (batch productIds)."""
     F_DUMP_DIR = DATA / "dump_batches"
     F_DUMP_STATE = DATA / "dump_state.json"
     st = json.loads(F_DUMP_STATE.read_text()) if F_DUMP_STATE.exists() else {"done": []}
     if not F_PRODUCTS.exists():
-        sys.exit("Chưa có products_all.json — chạy `products` trước.")
+        sys.exit("products_all.json missing — run `products` first.")
     products = json.loads(F_PRODUCTS.read_text())
     ids = [p.get("productId") for p in products if p.get("productId")]
     todo = [i for i in ids if i not in st["done"]]
-    print(f"Số productId: {len(ids)} | còn: {len(todo)}", flush=True)
+    print(f"productId count: {len(ids)} | remaining: {len(todo)}", flush=True)
     F_DUMP_DIR.mkdir(exist_ok=True)
     batch_idx = len(st.get("batches", []))
     for start in range(0, len(todo), batch_size):
@@ -176,8 +176,8 @@ def step_dump(batch_size=50):
         st.setdefault("done", []).extend(chunk)
         st.setdefault("batches", []).append(out.name)
         F_DUMP_STATE.write_text(json.dumps(st, ensure_ascii=False, indent=1))
-        print(f"  dump batch {batch_idx}: {len(chunk)} xe -> {out.name}", flush=True)
-    print("==> HOÀN TẤT dump.", flush=True)
+        print(f"  dump batch {batch_idx}: {len(chunk)} vehicles -> {out.name}", flush=True)
+    print("==> DUMP COMPLETE.", flush=True)
 
 
 def main():
@@ -186,13 +186,13 @@ def main():
     ap.add_argument("--page-size", type=int, default=500)
     ap.add_argument("--max-pages", type=int, default=100)
     ap.add_argument("--batch-size", type=int, default=50)
-    ap.add_argument("--force", action="store_true", help="chạy dù token cục bộ báo hết hạn (dựa vào clock-skew server)")
+    ap.add_argument("--force", action="store_true", help="run even if the local token looks expired (relies on server clock-skew)")
     a = ap.parse_args()
 
     left = jwt_exp(TOKEN) - time.time()
     if left < 0 and not a.force:
-        sys.exit(f"TOKEN_DEAD: token hết hạn {-left/60:.1f} phút trước. Lấy token mới (F12 -> Application -> Cookies -> access_token).")
-    print(f"[auth] token {'CÒN ' + str(round(left/60,1)) + ' phút' if left > 0 else 'HẾT HẠN CỤC BỘ (--force: vẫn thử, server có thể chấp nhận trong skew 5 phút)'}", flush=True)
+        sys.exit(f"TOKEN_DEAD: token expired {-left/60:.1f} minutes ago. Get a new token (F12 -> Application -> Cookies -> access_token).")
+    print(f"[auth] token {'HAS ' + str(round(left/60,1)) + ' minutes left' if left > 0 else 'LOCALLY EXPIRED (--force: still tries, server may accept within the 5-minute skew)'}", flush=True)
 
     if a.step in ("products", "all"):
         step_products(a.page_size, a.max_pages)

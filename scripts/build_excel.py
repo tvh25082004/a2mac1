@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Build Excel: 1 sheet/hãng xe, mỗi sheet = ma trận 621 xe × 247 thông số A2MAC1.
-Theo design system của xlsx skill (templates/base.py)."""
+"""Build Excel: 1 sheet per brand, each sheet = a matrix of 621 vehicles x 247 A2MAC1 specs.
+Follows the design system of the xlsx skill (templates/base.py)."""
 import json, os, sys, re
 from pathlib import Path
 from collections import OrderedDict
@@ -24,7 +24,7 @@ DATA = Path("/home/z/my-project/data")
 OUT = Path("/home/z/my-project/download/A2MAC1_thong_so_ky_thuat_621_xe.xlsx")
 OUT.parent.mkdir(exist_ok=True)
 
-# ---------- 1. Nạp schema + values ----------
+# ---------- 1. Load schema + values ----------
 files = sorted((DATA / "spec_batches").glob("batch_*.json"))
 print("batch files:", len(files))
 
@@ -34,7 +34,7 @@ for g in first["propertyGroups"]:
     groups[g["propertyGroupName"]] = OrderedDict(
         (p["propertyId"], {"name": p["propertyName"], "type": p["propertyType"]})
         for p in g["properties"])
-# bổ sung property xuất hiện ở batch khác nhưng không có trong batch đầu
+# add properties that appear in other batches but not in the first batch
 for f in files[1:]:
     for g in json.loads(f.read_text())["propertyGroups"]:
         grp = groups.setdefault(g["propertyGroupName"], OrderedDict())
@@ -89,9 +89,9 @@ for pid, pvals in vehicles.items():
 by_brand = {}
 for pid, b in brand_of.items():
     by_brand.setdefault(b, []).append(pid)
-print("số hãng:", len(by_brand))
+print("brand count:", len(by_brand))
 for b, lst in sorted(by_brand.items(), key=lambda x: (-len(x[1]), x[0])):
-    print(f"   {b}: {len(lst)} xe")
+    print(f"   {b}: {len(lst)} vehicles")
 
 def safe_sheet_name(name, used):
     s = re.sub(r"[:\\/?*\[\]]", "-", name).strip() or "Sheet"
@@ -115,7 +115,7 @@ def clean_text(t):
 wb = Workbook()
 wb.properties.creator = "Z.ai"
 
-# ---------- 2. Sheet danh mục hãng ----------
+# ---------- 2. Brand index sheet ----------
 ws = wb.active
 ws.title = "Danh mục hãng"
 setup_sheet(ws, title=f"A2MAC1 IBP — Thông số kỹ thuật {len(vehicles)} dòng xe ({len(by_brand)} hãng xe)", last_col=5)
@@ -150,22 +150,22 @@ ws.column_dimensions["D"].width = 12
 ws.column_dimensions["E"].width = 26
 ws.freeze_panes = "B5"
 
-# ---------- 3. Sheet mỗi hãng ----------
+# ---------- 3. Per-brand sheets ----------
 col_index = []  # (groupId groupname, propId, name, type)
 col_index.append(("—", None, "Tên xe (Full Name)", "TEXT"))
 for gname, props in groups.items():
     for pid, meta in props.items():
         col_index.append((gname, pid, meta["name"], meta["type"]))
-NCOL = len(col_index) + 1  # +1 vì bắt đầu từ cột B
-print("cột mỗi sheet:", NCOL)
+NCOL = len(col_index) + 1  # +1 because columns start at B
+print("columns per sheet:", NCOL)
 
 row4_style_fill = fill_total()
 for b, pids in sorted(by_brand.items(), key=lambda x: x[0]):
     sname = brand_sheet_name[b]
     ws = wb.create_sheet(sname)
     setup_sheet(ws, title=f"{b} — {len(pids)} dòng xe • {n_props} thông số", last_col=min(NCOL, 40))
-    # hàng 4: nhóm thông số (merge theo span)
-    start = 3  # cột C trở đi mới là property
+    # row 4: property groups (merge by span)
+    start = 3  # properties start at column C
     gi = 3
     for gname, props in groups.items():
         span = len(props)
@@ -182,7 +182,7 @@ for b, pids in sorted(by_brand.items(), key=lambda x: x[0]):
     cB4 = ws.cell(row=4, column=2, value="Thông tin xe")
     cB4.font = font_subheader(); cB4.fill = row4_style_fill
     ws.cell(row=4, column=2).fill = row4_style_fill
-    # hàng 5: tên thông số
+    # row 5: property names
     ws.cell(row=5, column=2, value="Tên xe (Full Name)")
     gi = 3
     for gname, props in groups.items():
@@ -192,7 +192,7 @@ for b, pids in sorted(by_brand.items(), key=lambda x: x[0]):
     style_header_row(ws, 5, 2, NCOL)
     ws.row_dimensions[4].height = 22
     ws.row_dimensions[5].height = 48
-    # dữ liệu: sort theo Model -> năm giảm dần -> tên
+    # data: sort by Model -> year descending -> name
     pids_sorted = sorted(pids, key=lambda p: (str(model_of.get(p) or ""), -(year_of.get(p) or 0),
                                               str(name_of.get(p, ""))))
     r = 6
@@ -255,4 +255,4 @@ rv.column_dimensions["D"].width = 18
 rv.column_dimensions["E"].width = 14
 
 wb.save(OUT)
-print("ĐÃ LƯU:", OUT, f"({OUT.stat().st_size/1024/1024:.1f} MB)")
+print("SAVED:", OUT, f"({OUT.stat().st_size/1024/1024:.1f} MB)")

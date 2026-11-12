@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diag nhanh: token có hợp lệ? Ai trả 403?"""
+"""Quick diag: is the token valid? Who returns 403?"""
 import os, re, json, time, base64, datetime
 from pathlib import Path
 import requests
@@ -16,7 +16,7 @@ now = time.time()
 print("jti :", pl["jti"])
 print("exp :", datetime.datetime.fromtimestamp(pl["exp"], vn), "| iat:", datetime.datetime.fromtimestamp(pl["iat"], vn))
 print("now :", datetime.datetime.fromtimestamp(now, vn))
-print("còn :", round((pl["exp"] - now) / 60, 1), "phút | token len:", len(TOK))
+print("remaining :", round((pl["exp"] - now) / 60, 1), "minutes | token len:", len(TOK))
 
 BASE = "https://ibp.a2mac1.com"
 S = requests.Session()
@@ -29,7 +29,7 @@ def try_hdrs(tag, headers):
 
 H = {"Content-Type": "application/json", "Accept": "application/json",
      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-try_hdrs("không auth", H)
+try_hdrs("no auth", H)
 try_hdrs("Bearer only", {**H, "Authorization": f"Bearer {TOK}"})
 try_hdrs("Cookie only", {**H, "Cookie": f"access_token={TOK}"})
 try_hdrs("Bearer+Cookie+Origin", {**H, "Authorization": f"Bearer {TOK}", "Cookie": f"access_token={TOK}",

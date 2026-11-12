@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Thử get-files với hierarchyId của package + tải file bằng package token."""
+"""Try get-files with the package hierarchyId + download files with the package token."""
 import os, re, json
 from pathlib import Path
 import requests
@@ -22,7 +22,7 @@ r = S.get(BASE + "/api/visual/files/packages", params=[("productIds", p) for p i
 pkgs = r.json()
 print("packages:", len(pkgs))
 hids = sorted({h for pk in pkgs for h in (pk.get("hierarchyIds") or [])})
-print("hierarchyIds trong packages:", hids)
+print("hierarchyIds in packages:", hids)
 
 for hid in hids[:3]:
     body = {"productIds": PIDS, "hierarchyId": hid, "isBookmark": False}
@@ -34,7 +34,7 @@ for hid in hids[:3]:
         Path("/home/z/my-project/data/visual_files_sample.json").write_text(json.dumps(d))
         break
 
-# tải thử bằng package token (package đầu)
+# trial download using the package token (first package)
 pk = pkgs[0]
 ptok = pk["token"]
 for pat in ["/files/downloads/files", "/files/downloads"]:

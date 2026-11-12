@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cào gấp trong window token: 3D availability 621 xe + tree hierarchy + BOM node + parts."""
+"""Crawl urgently within the token window: 3D availability for 621 vehicles + hierarchy tree + BOM node + parts."""
 import os, re, json, time
 from pathlib import Path
 import requests
@@ -27,19 +27,19 @@ def t(tag, method, path, body=None, params=None):
         if r.status_code == 200:
             return r
         if r.status_code in (401, 403):
-            print(f"[{tag}] {r.status_code} — warm-up, chờ 4s retry {i+1}", flush=True)
+            print(f"[{tag}] {r.status_code} — warm-up, waiting 4s, retry {i+1}", flush=True)
             time.sleep(4)
             continue
         print(f"[{tag}] {r.status_code} | {len(r.content)/1024:.0f} KB", flush=True)
         return r
-    print(f"[{tag}] FAIL sau 8 lần", flush=True)
+    print(f"[{tag}] FAIL after 8 attempts", flush=True)
     return r
 
 products = json.loads((DATA / "products_all.json").read_text())
 ids = [p["productId"] for p in products if p.get("productId")]
-print("xe:", len(ids))
+print("vehicles:", len(ids))
 
-# 1) 3D availability theo từng xe (chunk 200)
+# 1) 3D availability per vehicle (chunks of 200)
 avail = {}
 for i in range(0, len(ids), 200):
     chunk = ids[i:i + 200]
@@ -57,7 +57,7 @@ for i in range(0, len(ids), 200):
 print("3D avail entries:", len(avail), "| sample:", json.dumps(list(avail.items())[:2] if isinstance(avail, dict) else list(avail)[:2], ensure_ascii=False)[:300])
 (DATA / "files_3d_availability.json").write_text(json.dumps(avail, ensure_ascii=False, indent=1))
 
-# 2) tree hierarchy có mapped nodes
+# 2) hierarchy tree with mapped nodes
 r = t("tree hierarchy", "POST", f"/api/hierarchies/{HID}", {"Filters": None, "IncludeMappedNodes": True})
 if r.status_code == 200 and r.content:
     (DATA / "hierarchy_tree.json").write_text(r.text)
@@ -67,7 +67,7 @@ if r.status_code == 200 and r.content:
     elif isinstance(d, dict):
         print("   keys:", list(d.keys())[:20], "|", json.dumps(d, ensure_ascii=False)[:400])
 
-# 3) bom theo node đầu (thử node từ tree)
+# 3) BOM for the first node (try a node from the tree)
 node_id = None
 try:
     if isinstance(d, list) and d:
@@ -78,7 +78,7 @@ try:
             node_id = ch[0].get("id") or ch[0].get("hierarchyNodeId")
 except Exception as e:
     print("tree parse:", e)
-print("node thử:", node_id)
+print("node tried:", node_id)
 if node_id:
     r = t("compare/bom node", "POST", "/api/products/compare/bom",
           {"hierarchyId": HID, "hierarchyNodeId": node_id, "isVisual": True})
@@ -93,7 +93,7 @@ if node_id:
     if r.status_code == 200 and r.content:
         (DATA / "bom_sample2.json").write_text(r.text)
 
-# 4) parts dưới hierarchy (trang 1)
+# 4) parts under the hierarchy (page 1)
 r = t("hierarchy parts p1", "POST", f"/api/hierarchies/{HID}/parts",
       {"filters": [], "sorter": None, "page": {"number": 1, "size": 50}},
       {"allowDynamicColumns": "true", "hideMappedProperties": "true", "hideMappedProductTypesProperties": "false"})

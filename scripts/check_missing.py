@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check 32 cột của bảng hierarchies/{HID}/parts có thiếu so với 247 props compare không."""
+"""Check whether the 32 columns of hierarchies/{HID}/parts are missing compared to the 247 compare props."""
 import json
 from pathlib import Path
 
@@ -11,7 +11,7 @@ for f in files:
         for pr in g["properties"]:
             schema[pr["propertyId"]] = pr["propertyName"]
 
-print("tổng props compare:", len(schema))
+print("total compare props:", len(schema))
 extra = {
     "product": "Product", "part-picture": "Picture",
     "0000000151FTDV01": "VIN", "0000000151FKDV01": "Mileage (Km)",
@@ -28,9 +28,9 @@ extra = {
 missing = []
 for pid, name in extra.items():
     if pid in schema:
-        print(f"  ĐÃ CÓ: {name:22} = {schema[pid]}")
+        print(f"  ALREADY HAVE: {name:22} = {schema[pid]}")
     else:
         missing.append((pid, name))
-print("\nTHIẾU (phải cào thêm):")
+print("\nMISSING (need more crawling):")
 for pid, name in missing:
     print(f"  {pid} | {name}")

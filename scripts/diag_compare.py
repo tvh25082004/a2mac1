@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Chẩn đoán nhanh 401 trên compare/data — thử nhiều biến thể URL/body."""
+"""Quick diagnosis of 401 on compare/data — try multiple URL/body variants."""
 import os, re, json, time
 from pathlib import Path
 import requests

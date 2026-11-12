@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe endpoint api/products/compare/data/by-products với 5 productId."""
+"""Probe the api/products/compare/data/by-products endpoint with 5 productIds."""
 import os, re, json, sys, time
 from pathlib import Path
 import requests
@@ -30,7 +30,7 @@ def show(tag, r):
     try:
         d = r.json()
     except Exception as e:
-        print("không parse được JSON:", e, r.text[:200]); return None
+        print("failed to parse JSON:", e, r.text[:200]); return None
     if isinstance(d, dict):
         print("top-level keys:", list(d.keys())[:20])
         for k, v in d.items():
@@ -42,21 +42,21 @@ def show(tag, r):
         print(f"list len={len(d)}; sample:", json.dumps(d[0], ensure_ascii=False)[:800] if d else "EMPTY")
     return d
 
-# 1) by-products: body = mảng id thuần
+# 1) by-products: body = plain array of ids
 r = S.post(BASE + "/api/products/compare/data/by-products", json=ids,
            params={"hideMappedProperties": "true"}, timeout=180)
 d1 = show("by-products hideMapped=true", r)
 
-# 2) by-products không param
+# 2) by-products without params
 r = S.post(BASE + "/api/products/compare/data/by-products", json=ids, timeout=180)
 d2 = show("by-products (no params)", r)
 
-# 3) by-items với filters=[] (đúng theo bundle: v={itemIds, filters})
+# 3) by-items with filters=[] (matching the bundle: v={itemIds, filters})
 r = S.post(BASE + "/api/products/compare/data/by-items", json={"itemIds": ids, "filters": []},
            params={"hideMappedProperties": "true"}, timeout=180)
 d3 = show("by-items +filters=[]", r)
 
-# 4) hierarchies của product đầu tiên
+# 4) hierarchies of the first product
 r = S.get(BASE + f"/api/products/{ids[0]}/hierarchies", timeout=60)
 print(f"\n=== hierarchies {ids[0]}: HTTP {r.status_code}")
 if r.status_code == 200:

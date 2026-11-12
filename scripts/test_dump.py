@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test nhanh endpoint dump dữ liệu đầy đủ của product (chạy với token còn hạn)."""
+"""Quick test of the endpoint that dumps a product's full data (run while the token is still valid)."""
 import os, re, json, time
 from pathlib import Path
 import requests

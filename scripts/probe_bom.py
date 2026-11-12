@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe BOM + 3D với đúng body theo bundle. Chạy NGAY trước khi token hết."""
+"""Probe BOM + 3D with the exact body from the bundle. Run RIGHT before the token expires."""
 import os, re, json, time
 from pathlib import Path
 import requests
@@ -41,7 +41,7 @@ def t(tag, method, path, body=None, params=None):
 
 r = t("compare/bom", "POST", "/api/products/compare/bom",
       {"hierarchyId": HID, "hierarchyNodeId": None, "isVisual": True})
-t("bom/hid (2 xe)", "POST", f"/api/products/bom/{HID}",
+t("bom/hid (2 vehicles)", "POST", f"/api/products/bom/{HID}",
   {"productIds": IDS, "hierarchyId": HID, "page": {"number": 1, "size": 50},
    "search": None, "filters": [], "sorter": None, "selectedCostingProjects": None},
   {"allowDynamicColumns": "true", "hideMappedProperties": "true",

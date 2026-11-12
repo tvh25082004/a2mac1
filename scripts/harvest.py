@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Harvest phút cuối: mọi GET/POST nhẹ có thể 200 -> lưu JSON."""
+"""Final-minute harvest: every lightweight GET/POST that might return 200 -> save JSON."""
 import os, re, json, time
 from pathlib import Path
 import requests

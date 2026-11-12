@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""403 ở đâu: cả account bị chặn hay chỉ data? Thử các endpoint nhẹ + full cookies."""
+"""Where is the 403: is the whole account blocked or just data? Try lightweight endpoints + full cookies."""
 import os, re, json
 from pathlib import Path
 import requests
@@ -23,7 +23,7 @@ def t(tag, method, path, body=None, headers=None):
     body_snip = r.text[:220].replace("\n", " ")
     print(f"[{tag}] {method} {path} -> {r.status_code} | {body_snip!r}")
 
-# full cookie string (tất cả cookie như browser)
+# full cookie string (all cookies like the browser)
 t("full-cookie", "POST", "/api/visual/products", {"filters": [], "sorter": None, "page": {"number": 1, "size": 2}},
   {"Cookie": raw})
 t("account", "GET", "/api/account")

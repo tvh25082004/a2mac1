@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quét packages + visual files (3D/CAD) cho 621 xe — tóm tắt gọn, resume, 8 threads."""
+"""Scan packages + visual files (3D/CAD) for 621 vehicles — compact summary, resumable, 8 threads."""
 import os, re, json, time, threading
 from pathlib import Path
 from collections import Counter
@@ -26,7 +26,7 @@ S.headers.update({
 products = json.loads((DATA / "products_all.json").read_text())
 all_pids = [p["productId"] for p in products]
 
-# ---- 1) packages cho tất cả xe (batch 25) ----
+# ---- 1) packages for all vehicles (batches of 25) ----
 pkgs_f = DATA / "packages_all.json"
 if not pkgs_f.exists() or len(json.loads(pkgs_f.read_text() if pkgs_f.exists() else "[]")) < len(all_pids) - 10:
     pkgs_all = []
@@ -46,9 +46,9 @@ pkgs_all = json.loads(pkgs_f.read_text())
 pkgs_by_pid = {}
 for pk in pkgs_all:
     pkgs_by_pid.setdefault(pk["productId"], []).append(pk)
-print("packages xe có gói:", len(pkgs_by_pid), flush=True)
+print("packages: vehicles with packages:", len(pkgs_by_pid), flush=True)
 
-# ---- 2) get-files từng xe từng hierarchy ----
+# ---- 2) get-files per vehicle per hierarchy ----
 out_f = DATA / "visual_files_summary.json"
 res = json.loads(out_f.read_text()) if out_f.exists() else {}
 lock = threading.Lock()
@@ -91,7 +91,7 @@ def fetch_car(pid):
     return pid, rec
 
 todo = [p for p in all_pids if p not in res]
-print("get-files cần quét:", len(todo), flush=True)
+print("get-files to scan:", len(todo), flush=True)
 t0 = time.time(); n_ok = 0
 with ThreadPoolExecutor(max_workers=8) as ex:
     futs = {ex.submit(fetch_car, pid): pid for pid in todo}
@@ -99,7 +99,7 @@ with ThreadPoolExecutor(max_workers=8) as ex:
         pid, rec = f.result()
         with lock:
             if rec == "AUTH401":
-                print("AUTH 401 — DỪNG!", flush=True)
+                print("AUTH 401 — STOP!", flush=True)
                 out_f.write_text(json.dumps(res))
                 raise SystemExit("AUTH_EXPIRED")
             res[pid] = rec
@@ -107,6 +107,6 @@ with ThreadPoolExecutor(max_workers=8) as ex:
                 n_ok += 1
             if i % 40 == 0 or i == len(todo):
                 out_f.write_text(json.dumps(res))
-                print(f"get-files {i}/{len(todo)} | có file: {n_ok} | {time.time()-t0:.0f}s", flush=True)
+                print(f"get-files {i}/{len(todo)} | with files: {n_ok} | {time.time()-t0:.0f}s", flush=True)
 out_f.write_text(json.dumps(res))
-print(f"GET-FILES XONG: {len(res)} xe, {n_ok} xe có file 3D | {time.time()-t0:.0f}s", flush=True)
+print(f"GET-FILES DONE: {len(res)} vehicles, {n_ok} vehicles with 3D files | {time.time()-t0:.0f}s", flush=True)

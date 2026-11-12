@@ -1,6 +1,6 @@
-"""Tải hàng loạt file 3D/CAD của các xe ưu tiên (VinFast trước, rồi xe TQ).
-Mỗi xe: GET packages -> POST get-files -> tải từng file qua /files/downloads/files?token=
-Resume, chống 403 (pacing + backoff), giới hạn disk + thời gian. Output: data/cad_files/
+"""Bulk-download 3D/CAD files for priority vehicles (VinFast first, then Chinese brands).
+Per vehicle: GET packages -> POST get-files -> download each file via /files/downloads/files?token=
+Resumable, anti-403 (pacing + backoff), disk + time limits. Output: data/cad_files/
 """
 import re, os, json, time, sys, shutil, threading, random
 from pathlib import Path
@@ -10,10 +10,10 @@ import requests
 BASE = "https://ibp.a2mac1.com/api"
 DATA = Path("/home/z/my-project/data")
 OUT = DATA / "cad_files"
-TIME_LIMIT = 540          # giây - tự dừng trước khi tool call chết
-DISK_MIN_FREE = 1.2e9     # dừng khi còn < 1.2GB
+TIME_LIMIT = 540          # seconds - self-stop before the tool call dies
+DISK_MIN_FREE = 1.2e9     # stop when free < 1.2GB
 WORKERS = 5
-PACE = 0.22               # khoảng cách tối thiểu giữa 2 request (global)
+PACE = 0.22               # minimum gap between 2 requests (global)
 START = time.time()
 
 raw = (Path(__file__).parent / ".env").read_text().split("A2MAC1_TOKEN=")[1].split("\n")[0].strip().strip("'")
@@ -108,10 +108,10 @@ def main():
     prog_path = DATA / "cad_progress.json"
     prog = json.loads(prog_path.read_text()) if prog_path.exists() else {}
     cars = json.load(open(DATA / "cad_priority.json"))
-    # lọc brand thật (loại false positive Hyundai/Mercedes/Mini...)
+    # filter real brands (drop false positives Hyundai/Mercedes/Mini...)
     CN = {'AITO','Aion','Aiways','Avatr','BAIC','BYD','Baojun','Changan','Chery','Denza','Exeed','GAC','Geely','Haval','IM','Jaecoo','Leapmotor','Li','Luxeed','Lynk','MG','Maxus','NIO','Onvo','Roewe','Voyah','WEY','Zeekr','Wuling','Hongqi','Bestune','Deepal','Dongfeng','XPeng','Xiaomi','JAC','Forthing','Venucia','Arcfox','Rising','HiPhi','Seres','iCAR','Soueast','Haima','Kaiyi','Foton','Zhiji','Wey'}
     queue = [c for c in cars if c["name"].split()[0] in CN or c["name"].lower().startswith("vinfast")]
-    print(f"Queue: {len(queue)} xe (VinFast trước). Token window {left():.0f}s", flush=True)
+    print(f"Queue: {len(queue)} vehicles (VinFast first). Token window {left():.0f}s", flush=True)
 
     tot_f = tot_b = 0
     for ci, car in enumerate(queue):
@@ -123,11 +123,11 @@ def main():
         folder = OUT / sanitize(brand, 30) / f"{sanitize(name, 80)}__{pid[-10:]}"
         folder.mkdir(parents=True, exist_ok=True)
         mf = folder / "manifest.json"
-        # resume: xe đã xong bỏ qua
+        # resume: skip vehicles already done
         if mf.exists():
             m0 = json.loads(mf.read_text())
             if m0.get("status") == "done" and len(m0.get("files", [])) >= m0.get("expected", 1):
-                print(f"[{ci}] SKIP {name} (done trước đó)", flush=True)
+                print(f"[{ci}] SKIP {name} (done earlier)", flush=True)
                 continue
         t0 = time.time()
         hiers = get_hiers(pid)
@@ -188,9 +188,9 @@ def main():
         prog[pid] = {"name": name, "files": n_ok, "bytes": nbytes, "status": status, "errors": n_err}
         prog_path.write_text(json.dumps(prog, ensure_ascii=False, indent=1))
         tot_f += n_ok; tot_b += nbytes
-        print(f"[{ci}] {name}: {n_ok}/{len(recs)} file, {nbytes/1e6:.1f}MB, {time.time()-t0:.0f}s "
-              f"(403 gần nhất: {_stat403[0]}, pace {_throttle[0]:.2f}s) | tổng {tot_f} file {tot_b/1e6:.0f}MB | còn {left():.0f}s", flush=True)
-    print(f"KẾT THÚC: {tot_f} file, {tot_b/1e6:.0f}MB, {len(prog)} xe trong progress", flush=True)
+        print(f"[{ci}] {name}: {n_ok}/{len(recs)} files, {nbytes/1e6:.1f}MB, {time.time()-t0:.0f}s "
+              f"(recent 403s: {_stat403[0]}, pace {_throttle[0]:.2f}s) | total {tot_f} files {tot_b/1e6:.0f}MB | {left():.0f}s left", flush=True)
+    print(f"FINISHED: {tot_f} files, {tot_b/1e6:.0f}MB, {len(prog)} vehicles in progress", flush=True)
 
 if __name__ == "__main__":
     main()

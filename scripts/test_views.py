@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""2 phát cuối: views + context để tìm projectId/scenarioId -> nếu có thì add compare -> data."""
+"""Two final shots: views + context to find projectId/scenarioId -> if present, add compare -> data."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests
@@ -41,7 +41,7 @@ if views and isinstance(views, list) and isinstance(views[0], dict):
     for v in views:
         proj = v.get("projectId") or proj
         scen = v.get("scenarioId") or scen
-        # tìm sâu hơn
+        # dig deeper
         s = json.dumps(v)
         if not proj and "projectId" in s:
             import re as _re
@@ -53,7 +53,7 @@ if views and isinstance(views, list) and isinstance(views[0], dict):
             if mm: scen = mm.group(1)
 print(f"projectId={proj} scenarioId={scen}")
 
-print("== POST compare/item với project/scenario ==")
+print("== POST compare/item with project/scenario ==")
 r = S.post(f"{BASE}/api/compare/item",
            json={"is3d": False, "item": {"itemId": PID, "projectId": proj, "scenarioId": scen}}, timeout=60)
 brief(r, 500)

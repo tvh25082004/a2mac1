@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""quick-search đúng body -> tìm 1 xe kèm projectId/scenarioId -> compare item -> compare/data."""
+"""quick-search with the correct body -> find one vehicle with projectId/scenarioId -> compare item -> compare/data."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Chẩn đoán + tải lại ảnh lỗi."""
+"""Diagnose + re-download failed images."""
 import json, re, time
 from pathlib import Path
 import requests
@@ -34,7 +34,7 @@ for p in products:
     else:
         http_fail.append((pid, name[:50], r.status_code, len(r.content), url[:70]))
 print("recovered:", recovered)
-print("không có URL:", len(missing_url))
+print("no URL:", len(missing_url))
 for x in missing_url[:5]:
     print("  ", x)
 print("HTTP fail:", len(http_fail))

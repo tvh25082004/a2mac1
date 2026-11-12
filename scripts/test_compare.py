@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nước rút: test luồng compare — POST item -> GET items -> compare/data."""
+"""First pass: test the compare flow — POST item -> GET items -> compare/data."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests
@@ -28,17 +28,17 @@ def show(tag, r, maxlen=800):
     print()
     return r
 
-# 0. token còn sống không?
+# 0. is the token still alive?
 r = S.get(f"{BASE}/api/compare/items", timeout=60)
 if r.status_code in (401, 403):
-    print(f"TOKEN không còn được chấp nhận: {r.status_code}")
+    print(f"TOKEN no longer accepted: {r.status_code}")
     sys.exit(1)
-print(f"TOKEN CÒN SỐNG ({r.status_code}) | compare items hiện tại: {r.text[:200]}")
+print(f"TOKEN ALIVE ({r.status_code}) | current compare items: {r.text[:200]}")
 
-# 1. thêm 1 item vào compare set
+# 1. add one item to the compare set
 r = S.post(f"{BASE}/api/compare/item", json={"is3d": False, "item": {"itemId": PID}}, timeout=60)
 show("POST compare/item {is3d:false, item:{itemId}}", r, 500)
 
-# 2. xem compare set
+# 2. view the compare set
 r = S.get(f"{BASE}/api/compare/items", timeout=60)
 show("GET compare/items", r, 900)

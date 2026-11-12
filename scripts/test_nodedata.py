@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Node data: thông số công nghệ theo từng node của 1 xe — thử nhiều biến thể body/params."""
+"""Node data: tech specs per node of one vehicle — try multiple body/params variants."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests

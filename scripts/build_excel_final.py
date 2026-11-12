@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Build file Excel CUỐI CÙNG: ma trận thông số + ảnh xe nhúng + sheet CAD&3D.
-Mỗi sheet hãng: hàng 4-5 = dải ảnh xe phía trên cột mỗi xe, hàng 6 = nhóm thông số,
-hàng 7 = tên thông số, hàng 8+ = dữ liệu."""
+"""Build the FINAL Excel file: spec matrix + embedded vehicle images + CAD&3D sheet.
+Each brand sheet: rows 4-5 = vehicle image strip above each vehicle column, row 6 = property groups,
+row 7 = property names, row 8+ = data."""
 import json, os, sys, re, math
 from pathlib import Path
 from collections import OrderedDict
@@ -24,11 +24,11 @@ from templates.base import (
 
 DATA = Path("/home/z/my-project/data")
 IMG_DIR = Path("/home/z/my-project/download/A2MAC1_anh_xe")
-IMG_DIR_HD = Path("/home/z/my-project/data/embed_cache")   # 103 ảnh fullHD đã thu nhỏ 320px để nhúng
+IMG_DIR_HD = Path("/home/z/my-project/data/embed_cache")   # 103 fullHD images downscaled to 320px for embedding
 OUT = Path("/home/z/my-project/download/A2MAC1_benchmark_full_621_xe.xlsx")
 OUT.parent.mkdir(exist_ok=True)
 
-# ---------- 1. Nạp schema + values ----------
+# ---------- 1. Load schema + values ----------
 files = sorted((DATA / "spec_batches").glob("batch_*.json"))
 print("batch files:", len(files))
 
@@ -57,7 +57,7 @@ for f in files:
         vehicles[pid] = pvals
 print("vehicles:", len(vehicles))
 
-# ---------- 1b. Map ảnh (518 nhỏ public + 103 fullHD đã thu nhỏ) ----------
+# ---------- 1b. Image map (518 small public + 103 downscaled fullHD) ----------
 img_map = {}
 for f in IMG_DIR.glob("*.jpg"):
     m = re.search(r"\[([A-Za-z0-9]+)\]\.jpg$", f.name)
@@ -65,7 +65,7 @@ for f in IMG_DIR.glob("*.jpg"):
         img_map[m.group(1)] = f
 for f in IMG_DIR_HD.glob("*.jpg"):
     img_map[f.stem] = f
-print("ảnh:", len(img_map))
+print("images:", len(img_map))
 
 BRAND_PID, MODEL_PID, YEAR_PID, TRIM_PID = ("00000000TLEEDV01", "00000000TLEGDV01",
                                             "00000000TLDRDV01", "00000000TLD3DV01")
@@ -98,7 +98,7 @@ for pid, pvals in vehicles.items():
     y, _, ynum = parse_val(pvals.get(YEAR_PID))
     year_of[pid] = ynum if ynum is not None else (int(y) if y and str(y).isdigit() else None)
 
-# ---------- 1c. Dữ liệu 3D/CAD + Teardown ----------
+# ---------- 1c. 3D/CAD + Teardown data ----------
 visual = json.loads((DATA / "visual_files_summary.json").read_text()) if (DATA / "visual_files_summary.json").exists() else {}
 td_state = json.loads((DATA / "teardown_state.json").read_text()) if (DATA / "teardown_state.json").exists() else {"rows": {}}
 pkgs_all = json.loads((DATA / "packages_all.json").read_text()) if (DATA / "packages_all.json").exists() else []
@@ -111,7 +111,7 @@ TD_PID = {"Package": "A0000067RCOMEU01", "Status": "A0000067RD7VEU01",
           "Teardown Date": "A000006GM7CQEU01"}
 
 def td_fields(pid):
-    """Trích trạng thái teardown/3D của xe từ rows — lấy dòng Program Year mới nhất."""
+    """Extract the vehicle's teardown/3D status from rows — take the row with the latest Program Year."""
     resp = td_state["rows"].get(pid)
     if not resp or not resp.get("rows"):
         return None
@@ -136,7 +136,7 @@ def td_fields(pid):
 by_brand = {}
 for pid, b in brand_of.items():
     by_brand.setdefault(b, []).append(pid)
-print("số hãng:", len(by_brand))
+print("brand count:", len(by_brand))
 
 def safe_sheet_name(name, used):
     s = re.sub(r"[:\\/?*\[\]]", "-", name).strip() or "Sheet"
@@ -160,7 +160,7 @@ def clean_text(t):
 wb = Workbook()
 wb.properties.creator = "Z.ai"
 
-# ---------- 2. Sheet danh mục hãng ----------
+# ---------- 2. Brand index sheet ----------
 ws = wb.active
 ws.title = "Danh mục hãng"
 setup_sheet(ws, title=f"A2MAC1 IBP — Benchmark {len(vehicles)} dòng xe ({len(by_brand)} hãng) • {n_props} thông số + ảnh + 3D/CAD", last_col=7)
@@ -206,7 +206,7 @@ ws.column_dimensions["F"].width = 14
 ws.column_dimensions["G"].width = 26
 ws.freeze_panes = "B5"
 
-# ---------- 2b. Sheet 3D & Teardown theo xe ----------
+# ---------- 2b. 3D & Teardown sheet per vehicle ----------
 sh3 = wb.create_sheet("3D & Teardown")
 sh3.sheet_properties.tabColor = "1F6E43"
 setup_sheet(sh3, title="Danh mục file 3D/CAD + trạng thái Teardown theo từng xe (đã quét ngày 11/11/2026)", last_col=12)
@@ -255,25 +255,25 @@ sh3.freeze_panes = "D5"
 for L, w in {"B": 6, "C": 16, "D": 34, "E": 8, "F": 10, "G": 10, "H": 12, "I": 40, "J": 16, "K": 16, "L": 26}.items():
     sh3.column_dimensions[L].width = w
 
-# ---------- 3. Sheet mỗi hãng (kèm ảnh) ----------
+# ---------- 3. Per-brand sheets (with images) ----------
 col_index = []
 col_index.append(("—", None, "Tên xe (Full Name)", "TEXT"))
 for gname, props in groups.items():
     for pid, meta in props.items():
         col_index.append((gname, pid, meta["name"], meta["type"]))
 NCOL = len(col_index) + 1
-print("cột mỗi sheet:", NCOL)
+print("columns per sheet:", NCOL)
 
-IMG_W, IMG_H = 78, 50          # kích thước hiển thị (px)
+IMG_W, IMG_H = 78, 50          # display size (px)
 row4_style_fill = fill_total()
 n_embedded = 0
 for b, pids in sorted(by_brand.items(), key=lambda x: x[0]):
     sname = brand_sheet_name[b]
     ws = wb.create_sheet(sname)
     setup_sheet(ws, title=f"{b} — {len(pids)} dòng xe • {n_props} thông số", last_col=min(NCOL, 40))
-    ws.row_dimensions[4].height = 28   # dải ảnh (2 hàng)
+    ws.row_dimensions[4].height = 28   # image strip (2 rows)
     ws.row_dimensions[5].height = 28
-    # hàng 6: nhóm thông số
+    # row 6: property groups
     gi = 3
     for gname, props in groups.items():
         span = len(props)
@@ -290,7 +290,7 @@ for b, pids in sorted(by_brand.items(), key=lambda x: x[0]):
     cB6.font = font_subheader(); cB6.fill = row4_style_fill
     ws.cell(row=6, column=2).fill = row4_style_fill
     ws.row_dimensions[6].height = 22
-    # hàng 7: tên thông số
+    # row 7: property names
     ws.cell(row=7, column=2, value="Tên xe (Full Name)")
     gi = 3
     for gname, props in groups.items():
@@ -299,7 +299,7 @@ for b, pids in sorted(by_brand.items(), key=lambda x: x[0]):
             gi += 1
     style_header_row(ws, 7, 2, NCOL)
     ws.row_dimensions[7].height = 48
-    # dữ liệu: sort theo Model -> năm giảm dần -> tên
+    # data: sort by Model -> year descending -> name
     pids_sorted = sorted(pids, key=lambda p: (str(model_of.get(p) or ""), -(year_of.get(p) or 0),
                                               str(name_of.get(p, ""))))
     r = 8
@@ -334,13 +334,13 @@ for b, pids in sorted(by_brand.items(), key=lambda x: x[0]):
     ws.column_dimensions["B"].width = 36
     auto_fit_columns(ws, min_width=10, max_width=26, header_row=7, data_start_row=8)
     ws.column_dimensions["B"].width = 36
-    # đảm bảo cột xe đủ rộng cho ảnh (>= 12.5 ký tự ~ 92px)
+    # ensure vehicle columns are wide enough for images (>= 12.5 chars ~ 92px)
     for ci in range(3, NCOL + 1):
         L = get_column_letter(ci)
         cur = ws.column_dimensions[L].width or 10
         if cur < 12.5:
             ws.column_dimensions[L].width = 12.5
-    # nhúng ảnh phía trên cột mỗi xe
+    # embed images above each vehicle column
     for i, pid in enumerate(pids_sorted):
         ci = 3 + i
         L = get_column_letter(ci)
@@ -356,9 +356,9 @@ for b, pids in sorted(by_brand.items(), key=lambda x: x[0]):
             c = ws.cell(row=4, column=ci, value="Không có ảnh")
             c.font = font_caption()
             c.alignment = Alignment(horizontal="left", vertical="top")
-print("ảnh đã nhúng:", n_embedded)
+print("images embedded:", n_embedded)
 
-# ---------- 4. Sheet CAD & 3D ----------
+# ---------- 4. CAD & 3D sheet ----------
 cad = wb.create_sheet("CAD & 3D")
 cad.sheet_properties.tabColor = "2E75B6"
 setup_sheet(cad, title="Dữ liệu bổ sung trên A2MAC1 — 3D / CAD / Teardown", last_col=5)
@@ -417,7 +417,7 @@ for i, row_vals in enumerate(cad_rows):
     style_data_row(cad, rr, 2, 5, i)
     for c in range(2, 6):
         cad.cell(row=rr, column=c).alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
-    # ước lượng chiều cao hàng theo văn bản dài nhất
+    # estimate row height from the longest text
     est_lines = max(math.ceil(len(str(v)) / 55) for v in row_vals)
     cad.row_dimensions[rr].height = max(34, est_lines * 13 + 8)
     rr += 1
@@ -468,4 +468,4 @@ rv.column_dimensions["E"].width = 12
 rv.column_dimensions["F"].width = 14
 
 wb.save(OUT)
-print("ĐÃ LƯU:", OUT, f"({OUT.stat().st_size/1024/1024:.1f} MB)")
+print("SAVED:", OUT, f"({OUT.stat().st_size/1024/1024:.1f} MB)")

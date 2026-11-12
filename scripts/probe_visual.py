@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe visual files (3D/CAD) packages + get-files cho 2 xe mẫu."""
+"""Probe visual files (3D/CAD) packages + get-files for 2 sample vehicles."""
 import os, re, json
 from pathlib import Path
 import requests
@@ -27,7 +27,7 @@ if r.status_code == 200:
     d = r.json()
     print(json.dumps(d, indent=1)[:1800])
 
-# 2) get-files (không hierarchyId)
+# 2) get-files (without hierarchyId)
 body = {"productIds": PIDS, "isBookmark": False}
 r = S.post(BASE + "/api/visual/files/get-files?api-version=2.0", json=body, timeout=60)
 print("2) get-files:", r.status_code, len(r.content))
@@ -39,7 +39,7 @@ if r.status_code == 200:
     else:
         print(json.dumps(d, indent=1)[:1500])
 
-# 3) get-files với hierarchyId
+# 3) get-files with hierarchyId
 body["hierarchyId"] = HID
 r = S.post(BASE + "/api/visual/files/get-files?api-version=2.0", json=body, timeout=60)
 print("3) get-files+hier:", r.status_code, len(r.content))

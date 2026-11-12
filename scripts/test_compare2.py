@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nước rút cuối: PUT compare/items (thay cả set) -> GET -> compare/data."""
+"""Final pass: PUT compare/items (replace the whole set) -> GET -> compare/data."""
 import os, re, json, time, sys
 from pathlib import Path
 import requests
@@ -26,7 +26,7 @@ def brief(r, n=600):
     print(f"    HTTP {r.status_code} len={len(t)}: {t[:n]}")
     print()
 
-print("== PUT compare/items (1 item, chỉ itemId) ==")
+print("== PUT compare/items (1 item, itemId only) ==")
 r = S.put(f"{BASE}/api/compare/items", json=[{"itemId": PID}], timeout=60)
 brief(r)
 

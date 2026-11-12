@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tải 103 ảnh riêng tư (full-res) + crawl trạng thái 3D/Teardown cho 621 xe. Chạy song song, resume."""
+"""Download 103 private images (full-res) + crawl 3D/Teardown status for 621 vehicles. Parallel, resumable."""
 import os, re, json, time, threading
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -31,7 +31,7 @@ def safe_name(s):
     s = re.sub(r'[\\/:*?"<>|]+', "-", str(s)).strip()
     return s[:110] if s else "unknown"
 
-# danh sách xe thiếu ảnh (publicUrls null nhưng có token)
+# list of vehicles missing images (publicUrls null but token present)
 need_img = []
 for p in products:
     pid = p.get("productId")
@@ -39,14 +39,14 @@ for p in products:
     det = pf.get("details") or {}
     if det.get("token") and not (det.get("publicUrls") or {}).get("small"):
         need_img.append((pid, pf["originalValue"], det["token"], pf["details"].get("extension", "JPG")))
-print("cần tải ảnh:", len(need_img), flush=True)
+print("images to download:", len(need_img), flush=True)
 
 img_lock = threading.Lock()
 img_results = []
 
 def dl_image(item):
     pid, fid, ptok, ext = item
-    # dest nhỏ 300px đã có cho xe public; xe này lưu full-res + bản nhỏ để nhúng
+    # the small 300px dest already exists for public vehicles; these vehicles store full-res + a small copy for embedding
     try:
         r = S.get(BASE + "/files/downloads/files", params={"token": ptok, "api-version": "1.1"},
                   timeout=60)
@@ -66,16 +66,16 @@ with ThreadPoolExecutor(max_workers=5) as ex:
     for i, f in enumerate(as_completed(futs), 1):
         pid, st, sz = f.result()
         if st != "OK":
-            print("  ảnh FAIL:", pid, st, sz, flush=True)
-print(f"ẢNH XONG: {len(img_results)}/{len(need_img)} | {time.time()-t0:.0f}s", flush=True)
+            print("  image FAIL:", pid, st, sz, flush=True)
+print(f"IMAGES DONE: {len(img_results)}/{len(need_img)} | {time.time()-t0:.0f}s", flush=True)
 
-# ---------- crawl trạng thái 3D/Teardown cho cả 621 xe ----------
+# ---------- crawl 3D/Teardown status for all 621 vehicles ----------
 HID = "A000005AE6M1EU01"
 state_f = DATA / "teardown_state.json"
 state = json.loads(state_f.read_text()) if state_f.exists() else {"done": {}, "rows": {}}
 all_pids = [p["productId"] for p in products]
 todo = [pid for pid in all_pids if pid not in state["done"]]
-print("cần crawl teardown:", len(todo), flush=True)
+print("teardown to crawl:", len(todo), flush=True)
 
 def fetch_parts(pid):
     body = {"filters": [f"product-id eq {pid}"], "sorter": None, "page": {"number": 1, "size": 50}}
@@ -112,4 +112,4 @@ with ThreadPoolExecutor(max_workers=6) as ex:
             print("  teardown FAIL:", pid, flush=True)
 state_f.write_text(json.dumps(state))
 ok = sum(1 for v in state["done"].values() if v)
-print(f"TEARDOWN XONG: {ok}/{len(all_pids)} | {time.time()-t0:.0f}s", flush=True)
+print(f"TEARDOWN DONE: {ok}/{len(all_pids)} | {time.time()-t0:.0f}s", flush=True)

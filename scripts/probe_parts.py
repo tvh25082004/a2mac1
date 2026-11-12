@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Thử nhanh trong skew window cuối: parts theo product, has-3Dfiles lại."""
+"""Quick try within the final skew window: parts by product, re-run has-3Dfiles."""
 import os, re, json, time
 from pathlib import Path
 import requests
@@ -32,7 +32,7 @@ def t(tag, method, path, body=None, params=None):
         return r
     return r
 
-# 1) parts tổng (trang 1)
+# 1) all parts (page 1)
 r = t("parts all p1", "POST", f"/api/hierarchies/{HID}/parts",
       {"filters": [], "sorter": None, "page": {"number": 1, "size": 50}},
       {"allowDynamicColumns": "true", "hideMappedProperties": "true", "hideMappedProductTypesProperties": "false"})
@@ -45,7 +45,7 @@ if r.status_code == 200 and r.content:
             if isinstance(v, list) and v:
                 print(f"   [{k}] len={len(v)} sample:", json.dumps(v[0], ensure_ascii=False)[:400])
 
-# 2) parts theo product-id filter
+# 2) parts by product-id filter
 r = t("parts by product", "POST", f"/api/hierarchies/{HID}/parts",
       {"filters": ["product-id eq A0000004F0UTEU02"], "sorter": None, "page": {"number": 1, "size": 50}},
       {"allowDynamicColumns": "true", "hideMappedProperties": "true", "hideMappedProductTypesProperties": "false"})
@@ -60,7 +60,7 @@ if r.status_code == 200 and r.content:
     elif isinstance(d, list):
         print("   list len:", len(d), json.dumps(d[:1], ensure_ascii=False)[:400])
 
-# 3) has-3Dfiles lại (chunk nhỏ)
+# 3) has-3Dfiles again (small chunk)
 r = t("has-3Dfiles 2", "POST", "/api/access/users/has-3Dfiles", ["A0000004F0UTEU02"])
 if r.status_code == 200 and r.content:
     print("   ", r.text[:300])

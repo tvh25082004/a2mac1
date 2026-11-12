@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Kiểm tra nhanh token với server (bỏ qua guard exp cục bộ của a2mac1_tool.py).
-KHÔNG in token ra màn hình."""
+"""Quick token check against the server (skipping the local exp guard in a2mac1_tool.py).
+Do NOT print the token to the screen."""
 import os, re, sys
 from pathlib import Path
 import requests
@@ -11,7 +11,7 @@ raw = os.getenv("A2MAC1_TOKEN", "")
 m = re.search(r"access_token=([^;\s]+)", raw)
 tok = m.group(1) if m else raw
 if not tok:
-    sys.exit("Không tìm thấy token trong .env")
+    sys.exit("Token not found in .env")
 
 s = requests.Session()
 s.headers.update({
@@ -21,7 +21,7 @@ s.headers.update({
     "User-Agent": "Mozilla/5.0",
 })
 
-# thử cả 2 endpoint nhẹ để chẩn đoán
+# try both lightweight endpoints for diagnosis
 for path in ["/settings", "/api/products?api-version=2.0", "/api/hierarchies/A000005AE6M1EU01?api-version=2.0"]:
     try:
         r = s.get("https://ibp.a2mac1.com" + path, allow_redirects=False, timeout=30)
