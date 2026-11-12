@@ -5,9 +5,12 @@
 
 | Xe | So linh kien STL | Tong dung luong | Trang thai |
 |---|---|---|---|
-| VinFast VF6 Plus 2024 | 1638 | 9.83GB | DU 100% |
-| VinFast VF8 Plus 2023 | 69 | 0.54GB | 69/2003 (dang tiep) |
-| **TONG** | **1707** | **10.37GB** | |
+| VinFast VF6 Plus 2024 | 1.670 | ~10.1GB | DU 100% (1.670/1.670) |
+| VinFast VF8 Plus 2023 | 69 | 0.54GB | 69/2.003 (dang tiep) |
+| **TONG** | **1.739** | **10.50GB (khi giai nen) / 5.13GB (bundle zip)** | |
+
+> Ghi chu: bang chi tiet duoi day liet ke 1.707/1.739 file (32 file VF6 tai trong phien bi gian doan
+> chua duoc ghi ten vao manifest, nhung nam du trong bundle - da xac minh bang testzip va dem STL).
 
 ## Chi tiet tung linh kien
 ### VinFast VF6 Plus 2024 (1638 file)
