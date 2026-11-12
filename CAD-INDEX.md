@@ -1,19 +1,19 @@
-# Danh muc file CAD STL (da tai len GitHub Release)
+# CAD STL File Catalog (uploaded to GitHub Release)
 
-> Link tai: **https://github.com/tvh25082004/a2mac1/releases/tag/cad-v1**
-> Gom 3 bundle ZIP: CAD-bundle-01/02/03.zip (tong 5.13GB, 1.739 file STL).
+> Download: **https://github.com/tvh25082004/a2mac1/releases/tag/cad-v1**
+> Ships as 3 ZIP bundles: CAD-bundle-01/02/03.zip (5.13GB total, 1,739 STL files).
 
-| Xe | So linh kien STL | Tong dung luong | Trang thai |
+| Car | STL parts | Total size | Status |
 |---|---|---|---|
-| VinFast VF6 Plus 2024 | 1.670 | ~10.1GB | DU 100% (1.670/1.670) |
-| VinFast VF8 Plus 2023 | 69 | 0.54GB | 69/2.003 (dang tiep) |
-| **TONG** | **1.739** | **10.50GB (khi giai nen) / 5.13GB (bundle zip)** | |
+| VinFast VF6 Plus 2024 | 1,670 | ~10.1GB | COMPLETE 100% (1,670/1,670) |
+| VinFast VF8 Plus 2023 | 69 | 0.54GB | 69/2,003 (in progress) |
+| **TOTAL** | **1,739** | **10.50GB (uncompressed) / 5.13GB (zip bundles)** | |
 
-> Ghi chu: bang chi tiet duoi day liet ke 1.707/1.739 file (32 file VF6 tai trong phien bi gian doan
-> chua duoc ghi ten vao manifest, nhung nam du trong bundle - da xac minh bang testzip va dem STL).
+> Note: the table below lists 1,707/1,739 files (32 VF6 files downloaded in the interrupted session
+> were not written to the manifest, but they are fully present in the bundles - verified via testzip and STL count).
 
-## Chi tiet tung linh kien
-### VinFast VF6 Plus 2024 (1638 file)
+## Per-part details
+### VinFast VF6 Plus 2024 (1,638 listed files)
 
 | # | Ten file trong bundle | Kich thuoc | Part ID |
 |---|---|---|---|
@@ -1656,7 +1656,7 @@
 | 1637 | 2522-903.stl | 1.32MB | A00000569J21EU01 |
 | 1638 | 2522-906.stl | 4.37MB | A00000569IZGEU01 |
 
-### VinFast VF8 Plus 2023 (69 file)
+### VinFast VF8 Plus 2023 (69 files)
 
 | # | Ten file trong bundle | Kich thuoc | Part ID |
 |---|---|---|---|

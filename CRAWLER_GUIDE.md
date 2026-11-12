@@ -1,78 +1,79 @@
-# A2MAC1 IBP Crawler — Hướng dẫn cách crawl (CRAWLER GUIDE)
+# A2MAC1 IBP Crawler — Crawler Guide
 
-Toàn bộ code nằm trong `scripts/`, dữ liệu thô trong `data/`, sản phẩm cuối trong `download/`.
+All code lives in `scripts/`, raw data in `data/`, final deliverables in `download/`.
 
-## 0. Xác thực (Authentication)
-- Đăng nhập https://ibp.a2mac1.com → F12 → Application → Cookies → copy giá trị `access_token` (JWT, hạn ~24 phút).
-- Mọi request gửi kèm 2 header:
+## 0. Authentication
+- Log in at https://ibp.a2mac1.com → F12 → Application → Cookies → copy the `access_token` value (JWT, valid ~24 minutes).
+- Every request carries two headers:
   ```
   Cookie: access_token=<JWT>
   Authorization: Bearer <JWT>
   ```
-- Cấu hình trong `scripts/.env` (KHÔNG commit token thật — chỉ có `.env.example`):
+- Configuration lives in `scripts/.env` (NEVER commit the real token — only `.env.example` is tracked):
   ```
-  A2MAC1_TOKEN='<chuỗi cookie đầy đủ>'
+  A2MAC1_TOKEN='<full cookie string>'
   A2MAC1_DELAY=0.25
   ```
 
-## 1. Lấy danh sách xe (621 xe)
-- Nguồn: quick-search + filters products v2 (`data/harvest/quicksearch_all.json`, `filters_products_v2.json`).
-- Kết quả: `data/products_all.json` — mỗi xe có `productId`, `resourceName`, `pictureFile` (ảnh đại diện + token file riêng).
+## 1. Car list (621 cars)
+- Sources: quick-search + products filter v2 (`data/harvest/quicksearch_all.json`, `filters_products_v2.json`).
+- Result: `data/products_all.json` — each car has `productId`, `resourceName`, `pictureFile` (cover image + dedicated file token).
 
-## 2. Crawl 247 thông số kỹ thuật × 621 xe
+## 2. 247 technical specs × 621 cars
 - Endpoint: `POST https://ibp.a2mac1.com/api/products/compare/data/by-products?hideMappedProperties=true`
-- Body: **mảng productId** (tối đa 25 xe/lượt — giới hạn `compare.max-products=25` của nền tảng).
-- Code: `scripts/crawl_specs.py` — chia 621 xe thành 25 batch, lưu `data/spec_batches/batch_NNNN.json`, state resume ở `data/spec_state.json`.
-- Response: `{propertyGroups: [...], items: [...], values: {productId: {propertyId: {scenario: [{formatedValue, originalValue, unitLabel}]}}}}`
-- 247 thuộc tính thuộc 17 nhóm (Brand=`00000000TLEEDV01`, Model=`00000000TLEGDV01`, Model Year=`00000000TLDRDV01`).
+- Body: **array of productIds** (max 25 cars per request — platform limit `compare.max-products=25`).
+- Code: `scripts/crawl_specs.py` — splits 621 cars into 25-car batches, saves `data/spec_batches/batch_NNNN.json`, resume state in `data/spec_state.json`.
+- Response shape: `{propertyGroups: [...], items: [...], values: {productId: {propertyId: {scenario: [{formatedValue, originalValue, unitLabel}]}}}}`
+- The 247 properties span 17 groups (Brand=`00000000TLEEDV01`, Model=`00000000TLEGDV01`, Model Year=`00000000TLDRDV01`).
 
-## 3. Tải ảnh xe (621/621 — HOÀN THÀNH)
-- 518 ảnh công khai: URL blob `https://legacystorageeu.blob.core.windows.net/public/...` (lấy từ `pictureFile.details.publicUrls.small`) — `scripts/download_images.py`.
-- 103 ảnh riêng tư (đa số mẫu 2025-2026, fullHD tới 4496×3000):
+## 3. Car images (621/621 — COMPLETE)
+- 518 public images: blob URL `https://legacystorageeu.blob.core.windows.net/public/...` (from `pictureFile.details.publicUrls.small`) — `scripts/download_images.py`.
+- 103 private images (mostly 2025–2026 models, fullHD up to 4496×3000):
   ```
   GET /files/downloads/files?token=<pictureFile.details.token>&api-version=1.1
   ```
-  kèm JWT — code: `scripts/crawl_final.py`. Kết quả: `download/A2MAC1_anh_xe/` + `download/A2MAC1_anh_xe_fullHD/`.
+  with the JWT attached — code: `scripts/crawl_final.py`. Results: `download/A2MAC1_anh_xe/` + `download/A2MAC1_anh_xe_fullHD/`.
 
-## 4. Quét danh mục file 3D/CAD từng linh kiện (923.551 file / 578 xe — HOÀN THÀNH)
-- Gói dữ liệu theo xe:
+## 4. 3D/CAD part-file catalog (923,551 files / 578 cars — COMPLETE)
+- Per-car data package:
   ```
-  GET /api/visual/files/packages?productIds=<id1>&productIds=<id2>...   (batch 25 xe/lượt)
+  GET /api/visual/files/packages?productIds=<id1>&productIds=<id2>...   (batches of 25 cars)
   ```
-  → trả về packageId, **token gói**, packageBaseUrl, hierarchyIds (`00000003LSK4EU01` = 3D AutoReverse, `00000005ZT4GEU01` = Vehicle Occupant Packaging).
-- File 3D từng linh kiện:
+  → returns packageId, **package token**, packageBaseUrl, hierarchyIds (`00000003LSK4EU01` = 3D AutoReverse, `00000005ZT4GEU01` = Vehicle Occupant Packaging).
+- 3D files per part:
   ```
   POST /api/visual/files/get-files?api-version=2.0
   body: {"productIds": ["<pid>"], "hierarchyId": "00000003LSK4EU01", "isBookmark": false}
   ```
-  → mỗi file: part number, vật liệu (Metal > Steel, Plastics > PP...), màu, HD/SD, `isDownloadable`, **token riêng**.
-- Code: `scripts/crawl_all.py` / `crawl_all2.py` (bản throttle chống 403). Kết quả: `data/visual_files_summary.json` (theo xe), `data/packages_all.json`, mẫu full trong `data/visual_files_sample.json`.
+  → each file: part number, material (Metal > Steel, Plastics > PP…), color, HD/SD, `isDownloadable`, **dedicated token**.
+- Code: `scripts/crawl_all.py` / `crawl_all2.py` (throttled version, anti-403). Results: `data/visual_files_summary.json` (per car), `data/packages_all.json`, full sample in `data/visual_files_sample.json`.
 
-## 5. Trạng thái Teardown / 3D Data theo xe (420/621)
+## 5. Teardown / 3D Data status per car (420/621)
 ```
 POST /api/hierarchies/A000005AE6M1EU01/parts
 body: {"filters": ["product-id eq <productId>"], "sorter": null, "page": {"number": 1, "size": 50}}
 params: allowDynamicColumns=true, hideMappedProperties=true
 ```
-→ 12 thuộc tính/bản ghi: Package, Status, Teardown Data - Status/Delivery Date, 3D Data - Status, Preliminary/Final Data Delivery. Kết quả: `data/teardown_state.json`.
+→ 12 attributes per record: Package, Status, Teardown Data - Status/Delivery Date, 3D Data - Status, Preliminary/Final Data Delivery. Result: `data/teardown_state.json`.
 
-## 6. Tải file 3D/CAD thật
-- Tải 1 file: `GET /files/downloads/files?token=<fileToken>&api-version=1.1` (+`filename=`, `applyWatermark=false`).
-- Tải nhiều file (archive): `POST /downloads` với fileTokens — nền tảng giới hạn **250 lượt tải visual** (`visual.max-downloads`).
-- Quyền tài khoản: `data.export-download` (đã có).
+## 6. Downloading real 3D/CAD files
+- Single file: `GET /files/downloads/files?token=<fileToken>&api-version=1.1` (+`filename=`, `applyWatermark=false`).
+- Multi-file archive: `POST /downloads` with fileTokens — platform caps **250 visual downloads** (`visual.max-downloads`).
+- Account permission: `data.export-download` (granted).
 
-## 7. Ghép Excel cuối (scripts/build_excel_final.py)
-- 108 sheets: Danh mục hãng (hyperlink) + 104 sheet hãng (ma trận 247 thông số × N xe, **ảnh nhúng phía trên cột mỗi xe**) + `3D & Teardown` (621 dòng: số file 3D, vật liệu top 3, trạng thái teardown) + `CAD & 3D` (tổng hợp endpoint) + Review (COUNTA đối chiếu — 105/105 PASS).
-- Thư viện style: `skills/xlsx/templates/base.py`; QA: recalc → audit → validate.
+## 7. Final Excel assembly (scripts/build_excel_final.py)
+- 108 sheets: brand catalog (hyperlinked) + 104 brand sheets (247 specs × N cars matrix, **image embedded above each car column**) + `3D & Teardown` (621 rows: 3D file count, top 3 materials, teardown status) + `CAD & 3D` (endpoint summary) + Review (COUNTA cross-check — 105/105 PASS).
+- Style library: `skills/xlsx/templates/base.py`; QA: recalc → audit → validate.
 
-## ⚠️ Kinh nghiệm chống 403
-- 403 thường là **warm-up tạm thời**: chờ 4-5s rồi retry lại được.
-- Quét ~1.800 request liên tục trong 6 phút (8 threads) sẽ bị chặn 403 kéo dài → dùng 5 threads + delay 0.25s + backoff 4s khi lỗi.
-- JWT hết hạn giữa chừng → crawler phải **lưu state + resume** (đã làm trong mọi script).
+## ⚠️ Anti-403 lessons learned
+- A 403 is often a **temporary warm-up block**: wait 4–5s and retry — it usually clears.
+- Scanning ~1,800 requests in 6 minutes (8 threads) triggers a **long 403 block** → use 5 threads + 0.25s delay + 4s backoff on errors.
+- Bulk-downloading ~1,700 CAD files in ~11 minutes triggered an app-level block that lasted several hours — pace long download sessions and rotate tokens.
+- JWT expires mid-run → every crawler **saves state + resumes** (implemented everywhere).
 
-## Tổ chức file
+## Repository layout
 ```
-scripts/          # toàn bộ code crawl + build excel
-data/             # JSON thô: products, spec_batches (25 file), visual_files_summary, teardown_state, packages, harvest
-download/         # sản phẩm: A2MAC1_benchmark_full_621_xe.xlsx + thư mục ảnh
+scripts/          # all crawler + Excel builder code
+data/             # raw JSON: products, spec_batches (25 files), visual_files_summary, teardown_state, packages, harvest
+download/         # deliverables: A2MAC1_benchmark_full_621_xe.xlsx + image folders
 ```
