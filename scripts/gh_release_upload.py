@@ -40,22 +40,29 @@ for x in r.json():
 if not rel:
     r = requests.post(f"{api}/releases", headers=H, timeout=30, json={
         "tag_name": "cad-v1", "target_commitish": "main",
-        "name": "DATA CAD - VinFast VF6 Plus 2024 (STL)",
-        "body": "Bo file STL 3D tung linh kien VF6 Plus 2024 (nguon A2MAC1 IBP, bo 3D AutoReverse)."
-                " Tai cac file CAD-bundle-XX.zip, giai nen het vao cung thu muc."})
+        "name": "DATA CAD - VinFast VF6 Plus 2024 (STL) - 1670/1670 file",
+        "body": "Bo file STL 3D tung linh kien VinFast VF6 Plus 2024 (nguon A2MAC1 IBP, bo 3D AutoReverse): DU 1670/1670 file.\n"
+                "Kem 69 file dau cua VinFast VF8 Plus 2023 (dang cap nhat).\n\n"
+                "Cach dung: tai ca 3 file CAD-bundle-XX.zip, giai nen het vao cung thu muc."
+                " Moi STL la 1 linh kien rieng; manifest chi tiet nam trong data/cad_skip_list.json tren repo."})
     rel = r.json(); print("Tao release:", rel.get("id"), rel.get("html_url"))
 rid = rel["id"]
 
-# 4. upload bundles
+# 4. upload bundles (truyen so luong bundle toi da cho 1 lan chay: python3 gh_release_upload.py 1)
+LIMIT = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 bundles = sorted(Path("/home/z/my-project/download/bundles").glob("CAD-bundle-*.zip"))
 have = {a["name"] for a in requests.get(f"{api}/releases/{rid}/assets", headers=H, timeout=30).json()}
+done_n = 0
 for b in bundles:
     if b.name in have:
         print(f"  {b.name} da upload truoc -> bo qua"); continue
-    print(f"  upload {b.name} ({b.stat().st_size/1e9:.2f}GB)...")
+    if LIMIT and done_n >= LIMIT:
+        print(f"  (dung theo LIMIT={LIMIT}, chay lai de upload tiep)"); break
+    print(f"  upload {b.name} ({b.stat().st_size/1e9:.2f}GB)...", flush=True)
     with open(b, "rb") as f:
         r = requests.post(f"{aup}/releases/{rid}/assets", params={"name": b.name}, headers={
             "Authorization": f"token {PAT}", "Content-Type": "application/zip"},
             data=f, timeout=3600)
     print("   ->", r.status_code, r.json().get("browser_download_url", r.text[:200]))
+    done_n += 1
 print("\nLINK TAI: https://github.com/" + USER + "/" + REPO + "/releases/tag/cad-v1")

@@ -32,7 +32,7 @@ total_in = sum(sp.stat().st_size for sp in srcs) / 1e9
 print(f"Gop {len(srcs)} chunk ({total_in:.1f}GB) -> bundle #{n}...")
 
 zpath = BD / f"CAD-bundle-{n:02d}.zip.part"
-out = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6)
+out = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=1)  # level 1: STL da nen roi, gop nhanh
 srcs_used, moved, cur = [], 0, 0
 for sp in srcs:
     try:
@@ -52,7 +52,7 @@ for sp in srcs:
         n += 1
         srcs_used, moved, cur = [], 0, 0
         zpath = BD / f"CAD-bundle-{n:02d}.zip.part"
-        out = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6)
+        out = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=1)
 if moved:
     out.writestr("_MANIFEST.json", json.dumps({"bundle": zpath.name, "stl": moved,
                     "sources": [s.name for s in srcs_used]}, ensure_ascii=False))
