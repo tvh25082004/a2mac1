@@ -10,10 +10,14 @@ BASE = "https://ibp.a2mac1.com"
 DATA = Path("/home/z/my-project/data")
 DL = Path("/home/z/my-project/download")
 START = time.time()
-TIME_LIMIT = 540
+TIME_LIMIT = 800
 CHUNK_TARGET = 90e6
-raw = (Path(__file__).parent / ".env").read_text().split("A2MAC1_TOKEN=")[1].split("\n")[0].strip().strip("'")
-TOK = re.search(r"access_token=([^;\s]+)", raw).group(1)
+_tokfile = Path("/tmp/a2mac1_tok")
+if _tokfile.exists():
+    TOK = _tokfile.read_text().strip()  # plain JWT written fresh each session
+else:
+    raw = (Path(__file__).parent / ".env").read_text().split("A2MAC1_TOKEN=")[1].split("\n")[0].strip().strip("'")
+    TOK = re.search(r"access_token=([^;\s]+)", raw).group(1)
 H = {"Authorization": f"Bearer {TOK}", "Cookie": f"access_token={TOK}",
      "Origin": "https://ibp.a2mac1.com", "Referer": "https://ibp.a2mac1.com/"}
 S = requests.Session(); S.headers.update(H)
