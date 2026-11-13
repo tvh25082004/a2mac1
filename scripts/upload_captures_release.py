@@ -11,6 +11,9 @@ ASSETS = [
     ('/home/z/my-project/download/CAPTURES_VinFast_VF8_Plus_2023.zip',
      'PNG captures (4 views) of the 69 STL parts of VinFast VF8 Plus 2023 downloaded so '
      'far, rendered locally from the A2MAC1 CAD set. index.csv included.'),
+    ('/home/z/my-project/download/CAPTURES_Onvo_L60_60kWh_4X4_2024.zip',
+     'PNG captures (4 views) of the first 740 STL parts of Onvo L60 60kWh 4X4 2024 '
+     '(of 1,893; rest pending A2MAC1 unban + resume). index.csv included.'),
 ]
 
 
@@ -28,7 +31,8 @@ def main():
             'iso / front / side / top, shaded, white background, part name in the title). '
             'One zip per vehicle line, each with an index.csv (partId, material label, STL size).\n\n'
             '- VinFast VF6 Plus 2024: 1,670 parts (complete set)\n'
-            '- VinFast VF8 Plus 2023: 69 parts (first batch; rest pending A2MAC1 unblock)\n\n'
+            '- VinFast VF8 Plus 2023: 69 parts (first batch; rest pending A2MAC1 unblock)\n'
+            '- Onvo L60 60kWh 4X4 2024: 740/1,893 parts (403 ban cut the session; resume pending)\n\n'
             'Regeneration scripts: scripts/render_all_captures.py + package_captures.py in the repo.')
     try:
         rel = api('POST', '/releases', {'tag_name': 'cad-captures-v1',

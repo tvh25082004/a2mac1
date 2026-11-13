@@ -11,6 +11,7 @@ REL = 'https://github.com/tvh25082004/a2mac1/releases/tag/cad-captures-v1'
 DONE_ZIP = {  # name lower -> (status, link)
     'vinfast vf6 plus 2024': ('HOAN TAT 1,670 linh kiện x 4 góc nhìn', REL),
     'vinfast vf8 plus 2023': ('MỘT PHẦN 69/1,483 linh kiện', REL),
+    'onvo l60 60kwh 4x4 2024': ('MỘT PHẦN 740/1,893 linh kiện x 4 góc nhìn', REL),
 }
 HIGHLIGHT = {'Qiyuan Q06', 'L60 60kWh 4X4'}
 
@@ -65,7 +66,7 @@ for i, (brand, name, year, f3d, fdl) in enumerate(cars, 1):
     for hl in HIGHLIGHT:
         if hl in name:
             note = {'Qiyuan Q06': 'Xe PQ report hiện tại — KHÔNG có CAD trên A2MAC1',
-                    'L60 60kWh 4X4': 'Xe PQ report — CÓ 2,078 file 3D, sẵn sàng tải khi có token'}[hl]
+                    'L60 60kWh 4X4': 'Xe PQ report — đã capture 740/1,893 linh kiện (ban cắt phiên; resume phiên sau)'}[hl]
     vals = [i, brand, name, year, f3d, fdl, gb, 'CÓ (crawl xong)' if fdl >= 0 else '',
             cap, link, note]
     for c, v in enumerate(vals, 2):
