@@ -57,7 +57,7 @@ def main():
 
     def dl(it, carname):
         try:
-            time.sleep(0.15)
+            time.sleep(0.6)  # slow pace: ~3 files/s for 4 min triggered a 403 ban
             r = S.get(f"{BASE}/files/downloads/files", params={"token": it["token"], "api-version": "1.1"}, timeout=(10, 150))
             if r.status_code == 403:
                 BAN[0] = True; return None
@@ -94,7 +94,7 @@ def main():
                                             "hierarchy": "00000003LSK4EU01 (3D AutoReverse)",
                                             "ids": list(done_ids), "files": []})
         n_ok = 0
-        ex = ThreadPoolExecutor(3)
+        ex = ThreadPoolExecutor(2)  # 2 workers + 0.6s stagger ~ 1.3 files/s, ban-safe
         futs = [ex.submit(dl, it, name) for it in todo]
         ex.shutdown(wait=False)
         zf = None
