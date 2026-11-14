@@ -10,7 +10,7 @@ BASE = "https://ibp.a2mac1.com"
 DATA = Path("/home/z/my-project/data")
 DL = Path("/home/z/my-project/download")
 START = time.time()
-TIME_LIMIT = 800
+TIME_LIMIT = 1000  # token sống ~20 phút; pace an toàn quan trọng hơn cửa sổ dài
 CHUNK_TARGET = 90e6
 _tokfile = Path("/tmp/a2mac1_tok")
 if _tokfile.exists():

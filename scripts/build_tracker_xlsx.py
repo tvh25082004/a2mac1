@@ -1,6 +1,7 @@
-"""Build A2MAC1 capture master tracker xlsx from the uploaded 621-car benchmark Excel.
-One sheet: 621 cars with 3D file counts, per-car STL size estimate, capture status,
-release zip links. Summary block on top. Output: download/A2MAC1_Capture_Tracker_621.xlsx"""
+"""Build A2MAC1 capture master tracker xlsx (auto status from data/cad_skip_list.json manifest).
+Status per car comes from the download manifest, so every session's tracker refresh is automatic.
+Output: download/A2MAC1_Capture_Tracker_621.xlsx"""
+import json
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -8,12 +9,11 @@ from openpyxl.utils import get_column_letter
 SRC = 'upload/A2MAC1_benchmark_full_621_Version2.xlsx'
 OUT = 'download/A2MAC1_Capture_Tracker_621.xlsx'
 REL = 'https://github.com/tvh25082004/a2mac1/releases/tag/cad-captures-v1'
-DONE_ZIP = {  # name lower -> (status, link)
-    'vinfast vf6 plus 2024': ('HOAN TAT 1,670 linh kiện x 4 góc nhìn', REL),
-    'vinfast vf8 plus 2023': ('MỘT PHẦN 69/1,483 linh kiện', REL),
-    'onvo l60 60kwh 4x4 2024': ('MỘT PHẦN 740/1,893 linh kiện x 4 góc nhìn', REL),
-}
 HIGHLIGHT = {'Qiyuan Q06', 'L60 60kWh 4X4'}
+HIGHLIGHT_NOTE = {'Qiyuan Q06': 'Xe PQ report hiện tại — KHÔNG có CAD trên A2MAC1',
+                  'L60 60kWh 4X4': 'Xe PQ report — capture đang chạy theo từng phiên'}
+
+mf = json.load(open('data/cad_skip_list.json')).get('manifest', {})
 
 wb = openpyxl.load_workbook(SRC, read_only=True)
 ws = wb['3D & Teardown']
@@ -55,28 +55,30 @@ r = 5
 n3d = 0
 for i, (brand, name, year, f3d, fdl) in enumerate(cars, 1):
     gb = round(fdl * 6 / 1000, 1)
-    if fdl > 0:
-        status = DONE_ZIP.get(name.lower())
-        cap, link = status if status else ('Chờ access_token JWT', '')
-        fill = ok_fill if status else wait_fill
+    note = next((HIGHLIGHT_NOTE[k] for k in HIGHLIGHT if k in name), '')
+    if name in mf:
+        m = mf[name]
+        done, total = len(m.get('ids', [])), m.get('total_files', 0)
+        st = 'HOÀN TẤT' if done >= total else 'MỘT PHẦN'
+        cap = f'{st} {done:,}/{total:,} linh kiện x 4 góc nhìn'
+        fname = 'CAPTURES_' + name.replace(' ', '_') + '.zip'
+        link = f'{REL}/download/{fname}' if done else ''
+        fill = ok_fill if done >= total else part_fill
+        n3d += 1
+    elif fdl > 0:
+        cap, link, fill = 'Chờ access_token JWT (API sẵn sàng — hết ban)', '', wait_fill
         n3d += 1
     else:
         cap, link, fill = 'Không có 3D (chỉ ảnh xe)', '', no3d_fill
-    note = ''
-    for hl in HIGHLIGHT:
-        if hl in name:
-            note = {'Qiyuan Q06': 'Xe PQ report hiện tại — KHÔNG có CAD trên A2MAC1',
-                    'L60 60kWh 4X4': 'Xe PQ report — đã capture 740/1,893 linh kiện (ban cắt phiên; resume phiên sau)'}[hl]
-    vals = [i, brand, name, year, f3d, fdl, gb, 'CÓ (crawl xong)' if fdl >= 0 else '',
-            cap, link, note]
+    vals = [i, brand, name, year, f3d, fdl, gb, 'CÓ (crawl xong)', cap, link, note]
     for c, v in enumerate(vals, 2):
         cell = ws1.cell(row=r, column=c, value=v)
-        cell.fill = fill if not note else hl_fill
+        cell.fill = hl_fill if note else fill
     r += 1
 
 last = r - 1
-# summary block
 srow = last + 2
+tot_done = sum(len(m.get('ids', [])) for m in mf.values())
 sums = [
     ('Tổng số xe trong danh mục', len(cars)),
     ('Xe có 3D tải được', n3d),
@@ -84,18 +86,19 @@ sums = [
     ('Tổng file 3D (toàn danh mục)', sum(c[3] for c in cars)),
     ('Tổng file tải được', sum(c[4] for c in cars)),
     ('Tổng dung lượng STL ước tính (TB)', round(sum(c[4] for c in cars) * 6 / 1e6, 2)),
-    ('Đã capture xong (xe)', 1),
-    ('Đang chờ access_token (xe)', n3d - 1),
+    ('Đã tải + render (linh kiện, tổng cộng)', tot_done),
+    ('Xe đã có capture (trong manifest)', len(mf)),
 ]
 ws1.cell(row=srow, column=2, value='TỔNG KẾT').font = Font(bold=True, size=12)
 for k, (label, val) in enumerate(sums):
     ws1.cell(row=srow + 1 + k, column=2, value=label).font = Font(bold=True)
     ws1.cell(row=srow + 1 + k, column=3, value=val)
 ws1.cell(row=srow + len(sums) + 2, column=2,
-         value='Quy ước: 1 file STL ~6MB. Capture 4 góc = Iso/Front/Side/Top, PNG nền trắng, có index.csv.')\
+         value='Quy ước: 1 file STL ~6MB. Capture 4 góc = Iso/Front/Side/Top, PNG nền trắng, có index.csv. '
+               'Trạng thái đọc tự động từ data/cad_skip_list.json sau mỗi phiên tải.')\
     .font = Font(italic=True, size=9)
 
-widths = [5, 18, 42, 7, 11, 13, 13, 14, 30, 46, 44]
+widths = [5, 18, 42, 7, 11, 13, 13, 14, 32, 50, 44]
 for c, w in enumerate(widths, 2):
     ws1.column_dimensions[get_column_letter(c)].width = w
 ws1.freeze_panes = 'A5'
@@ -103,5 +106,5 @@ ws1.auto_filter.ref = f'B4:L{last}'
 ws1.sheet_view.zoomScale = 85
 
 out.save(OUT)
-print(f'SAVED {OUT} | xe: {len(cars)} | co 3D: {n3d} | '
-      f'file: {sum(c[4] for c in cars):,} | TB: {sum(c[4] for c in cars)*6/1e6:.2f}')
+print(f'SAVED {OUT} | xe: {len(cars)} | co 3D: {n3d} | da render: {tot_done:,} linh kien | '
+      f'xe trong manifest: {len(mf)}')

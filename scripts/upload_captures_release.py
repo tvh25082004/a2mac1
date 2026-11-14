@@ -1,24 +1,23 @@
-"""Create GitHub Release cad-captures-v1 and upload the capture zips as assets."""
-import json, os, sys, time, urllib.request
+"""Create/refresh GitHub Release cad-captures-v1 with all download/CAPTURES_*.zip assets.
+Asset names derive from car names; if a zip with the same name changed size on disk vs
+remote, the remote asset is replaced (so resume sessions update partial cars automatically).
+Release body + per-car counts come from data/cad_skip_list.json manifest."""
+import glob
+import json
+import os
+import time
+import urllib.request
 
 TOKEN = os.environ.get('GH_PAT', '')  # never hardcode; export GH_PAT before running
 REPO = 'tvh25082004/a2mac1'
 API = f'https://api.github.com/repos/{REPO}'
-ASSETS = [
-    ('/home/z/my-project/download/CAPTURES_VinFast_VF6_Plus_2024.zip',
-     'PNG captures (4 views) of all 1,670 STL parts of VinFast VF6 Plus 2024, rendered '
-     'locally from the A2MAC1 CAD set. index.csv maps every partId + material.'),
-    ('/home/z/my-project/download/CAPTURES_VinFast_VF8_Plus_2023.zip',
-     'PNG captures (4 views) of the 69 STL parts of VinFast VF8 Plus 2023 downloaded so '
-     'far, rendered locally from the A2MAC1 CAD set. index.csv included.'),
-    ('/home/z/my-project/download/CAPTURES_Onvo_L60_60kWh_4X4_2024.zip',
-     'PNG captures (4 views) of the first 740 STL parts of Onvo L60 60kWh 4X4 2024 '
-     '(of 1,893; rest pending A2MAC1 unban + resume). index.csv included.'),
-]
+TAG = 'cad-captures-v1'
+mf = json.load(open('/home/z/my-project/data/cad_skip_list.json')).get('manifest', {})
 
 
 def api(method, path, payload=None):
-    req = urllib.request.Request(API + path, method=method, data=json.dumps(payload).encode() if payload else None,
+    req = urllib.request.Request(API + path, method=method,
+                                 data=json.dumps(payload).encode() if payload else None,
                                  headers={'Authorization': f'token {TOKEN}',
                                           'Accept': 'application/vnd.github+json',
                                           'Content-Type': 'application/json'})
@@ -27,44 +26,51 @@ def api(method, path, payload=None):
 
 
 def main():
-    body = ('Per-part PNG captures rendered from the A2MAC1 3D STL set (4 standard views: '
-            'iso / front / side / top, shaded, white background, part name in the title). '
-            'One zip per vehicle line, each with an index.csv (partId, material label, STL size).\n\n'
-            '- VinFast VF6 Plus 2024: 1,670 parts (complete set)\n'
-            '- VinFast VF8 Plus 2023: 69 parts (first batch; rest pending A2MAC1 unblock)\n'
-            '- Onvo L60 60kWh 4X4 2024: 740/1,893 parts (403 ban cut the session; resume pending)\n\n'
-            'Regeneration scripts: scripts/render_all_captures.py + package_captures.py in the repo.')
+    assets = sorted(glob.glob('/home/z/my-project/download/CAPTURES_*.zip'))
+    if not assets:
+        print('khong co CAPTURES_*.zip nao trong download/')
+        return
+    lines = ['Per-part PNG captures rendered from the A2MAC1 3D STL set (4 standard views: '
+             'iso / front / side / top, shaded, white background, part name in the title). '
+             'One zip per vehicle line, each with an index.csv (partId, material label, STL size).', '']
+    for car, m in sorted(mf.items()):
+        done, total = len(m.get('ids', [])), m.get('total_files', 0)
+        st = 'complete set' if done >= total else f'{done:,}/{total:,} (resume pending)'
+        lines.append(f'- {car}: {st}')
+    lines += ['', 'Regeneration: scripts/session_pipeline.sh (download -> render -> package -> upload -> tracker).']
+    body = '\n'.join(lines)
+
     try:
-        rel = api('POST', '/releases', {'tag_name': 'cad-captures-v1',
-                                        'name': 'CAD Part Captures (PNG, 4 views) - VF6 1670 + VF8 69',
-                                        'body': body})
+        rel = api('POST', '/releases', {'tag_name': TAG, 'name': 'CAD Part Captures (PNG, 4 views)', 'body': body})
         print('created release:', rel['html_url'])
     except urllib.error.HTTPError as e:
-        if e.code == 422:  # tag already exists
-            rel = api('GET', '/releases/tags/cad-captures-v1')
-            print('release exists:', rel['html_url'])
-            for a in rel['assets']:
-                print('  existing asset:', a['name'])
-        else:
+        if e.code != 422:
             raise
+        rel = api('GET', f'/releases/tags/{TAG}')
+        api('PATCH', f'/releases/{rel["id"]}', {'body': body, 'name': 'CAD Part Captures (PNG, 4 views)'})
+        print('release exists (body refreshed):', rel['html_url'])
+
     upload_url = rel['upload_url'].split('{')[0]
-    for path, _ in ASSETS:
+    remote = {a['name']: a for a in api('GET', f'/releases/{rel["id"]}/assets?per_page=100')}
+    for path in assets:
         name = os.path.basename(path)
         size = os.path.getsize(path)
-        existing = {a['name'] for a in api('GET', f'/releases/{rel["id"]}/assets?per_page=100')}
-        if name in existing:
-            print(f'{name}: already uploaded, skip')
-            continue
+        if name in remote:
+            if remote[name]['size'] == size:
+                print(f'{name}: unchanged, skip')
+                continue
+            req = urllib.request.Request(remote[name]['url'], method='DELETE',
+                                         headers={'Authorization': f'token {TOKEN}'})
+            urllib.request.urlopen(req, timeout=60)
+            print(f'{name}: replaced (size changed {remote[name]["size"]} -> {size})')
         t0 = time.time()
-        print(f'uploading {name} ({size/1e6:.0f}MB)...', flush=True)
-        req = urllib.request.Request(f'{upload_url}?name={name}',
-                                     data=open(path, 'rb').read(),
+        print(f'uploading {name} ({size/1e6:.1f}MB)...', flush=True)
+        req = urllib.request.Request(f'{upload_url}?name={name}', data=open(path, 'rb').read(),
                                      method='POST',
                                      headers={'Authorization': f'token {TOKEN}',
                                               'Content-Type': 'application/zip'})
         with urllib.request.urlopen(req, timeout=1800) as r:
-            asset = json.load(r)
-        print(f'  -> {asset["state"]} in {time.time()-t0:.0f}s', flush=True)
+            print(f'  -> {json.load(r)["state"]} in {time.time()-t0:.0f}s', flush=True)
 
 
 if __name__ == '__main__':
