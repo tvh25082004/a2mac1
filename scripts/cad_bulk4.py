@@ -69,7 +69,7 @@ def main():
             fname = re.sub(r"[^A-Za-z0-9._-]+", "_", (m.group(1).strip().strip('"') if m else f"{it['id']}.stl"))
             p = tmp / f"{random.randint(10**5, 10**6-1)}_{fname}"
             p.write_bytes(r.content)
-            return (carname, fname, p, len(r.content), {"part": it.get("partId"), "name": it.get("name"), "label": it.get("label")})
+            return (carname, fname, p, len(r.content), {"part": it.get("partId"), "fid": it.get("id"), "name": it.get("name"), "label": it.get("label")})
         except Exception:
             return None
 
@@ -85,10 +85,11 @@ def main():
         for r in recs:
             if r.get("token") and r["id"] not in seen:
                 seen.add(r["id"]); uniq.append(r)
-        todo = [r for r in uniq if not any(r["id"] in e.get("id", "##") for e in manifest_all.get(name, {}).get("files", [])) ]
-        # simpler: matching by predicted filename is unreliable -> use ids
+        SESSION_FILE_CAP = 600  # ~935 files/10min triggered a 403 ban; stay under
+        # dedup: by stored record ids AND by partId (older manifests stored partId only)
         done_ids = set(manifest_all.get(name, {}).get("ids", []))
-        todo = [r for r in uniq if r["id"] not in done_ids]
+        done_parts = set(e.get("part") for e in manifest_all.get(name, {}).get("files", []) if e.get("part"))
+        todo = [r for r in uniq if r["id"] not in done_ids and r.get("partId") not in done_parts]
         log(f"{len(uniq)} unique files, still to download: {len(todo)}")
         mf = manifest_all.setdefault(name, {"product": pid, "total_files": len(uniq),
                                             "hierarchy": "00000003LSK4EU01 (3D AutoReverse)",
@@ -107,9 +108,11 @@ def main():
             chunk_bytes = 0
             zf = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6)
         for fu in futs:
-            if left() < 50 or BAN[0] or AUTH[0] or shutil.disk_usage("/home/z/my-project").free < 0.8e9:
+            if left() < 50 or BAN[0] or AUTH[0] or shutil.disk_usage("/home/z/my-project").free < 0.8e9 \
+                    or n_ok >= SESSION_FILE_CAP:
                 if BAN[0]: log("403 -> stop car")
                 if AUTH[0]: log("401 token expired -> end session")
+                if n_ok >= SESSION_FILE_CAP: log(f"file cap {SESSION_FILE_CAP} reached -> pause car (ban-safe volume)")
                 for f2 in futs: f2.cancel()
                 break
             res = fu.result()
@@ -120,7 +123,7 @@ def main():
             zf.write(p, f"{carname}/{fname}")
             p.unlink(missing_ok=True)
             names_in_chunks.add(fname)
-            mf["ids"].append(meta.get("part") or fname)
+            mf["ids"].append(meta.get("fid") or meta.get("part") or fname)
             mf["files"].append({"file": f"{carname}/{fname}", **meta, "size": size})
             done.add(fname)
             chunk_bytes += size
