@@ -35,6 +35,14 @@ def build_index(car):
 
 def main():
     t0 = time.time()
+    # chunks đã render xong -> xóa TRƯỚC khi zip để phòng disk-full (file VF8 ~16MB/file)
+    import glob
+    freed = 0
+    for f in glob.glob(os.path.join(DL, 'DATA-CAD_*.zip')):
+        freed += os.path.getsize(f)
+        os.remove(f)
+    if freed:
+        print(f'da xoa chunks sau render: {freed/1e9:.1f}GB giai phong')
     results = []
     for car in sorted(os.listdir(OUT)):
         car_dir = os.path.join(OUT, car)
