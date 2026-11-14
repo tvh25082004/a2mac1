@@ -52,7 +52,7 @@ def main():
     chunk_num = next_chunk_num()
     log(f"resume {len(done)} file names | starting chunk: {chunk_num:02d} | token {left()}s")
     tmp = Path("/tmp/cad4"); tmp.mkdir(exist_ok=True)
-    cars = json.load(open(DATA / "cad_priority.json"))[:8]
+    cars = json.load(open(DATA / "cad_priority.json"))  # full queue: 510 xe, tự bò qua các phiên
     BAN = [False]; AUTH = [False]
 
     def dl(it, carname):
