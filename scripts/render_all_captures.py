@@ -123,9 +123,13 @@ def main():
                 if st != 'OK':
                     print(f'  ERR {c}/{n}: {msg}', flush=True)
             z.close()
-            os.remove(bpath)
-            print(f'[bundle {bi}] DONE -> zip deleted | ok={done} err={err} '
-                  f'| {time.time()-t0:.0f}s', flush=True)
+            if os.environ.get('KEEP_BUNDLES'):
+                print(f'[bundle {bi}] DONE (bundle GIU LAI theo KEEP_BUNDLES) | ok={done} err={err} '
+                      f'| {time.time()-t0:.0f}s', flush=True)
+            else:
+                os.remove(bpath)
+                print(f'[bundle {bi}] DONE -> zip deleted | ok={done} err={err} '
+                      f'| {time.time()-t0:.0f}s', flush=True)
     print(f'ALL DONE ok={done} err={err} in {time.time()-t0:.0f}s', flush=True)
 
 
