@@ -37,6 +37,34 @@ def get_files(pid, hid="00000003LSK4EU01"):
                json={"productIds": [pid], "hierarchyId": hid, "isBookmark": False}, timeout=60)
     return r.json() if r.status_code == 200 else None
 
+
+# 5 hierarchy types: xe khác nhau giữ 3D ở hierarchy khác nhau (Treo/Navara/Celerio = VOP;
+# VF8 còn 3,614 file xEV + 174 VOP ngoài 2,003 AutoReverse)
+HIERS = [("00000003LSK4EU01", ""), ("00000005ZT4GEU01", "VOP"), ("0000009X67MIEU02", "xEV"),
+         ("00000007JE0SEU01", "BIW"), ("000000087JH2EU01", "CH")]
+
+
+def get_files_all(pid):
+    """Query ALL 5 hierarchy types, merge, dedupe by file id; tag non-AutoReverse records."""
+    out, seen = [], set()
+    for hid, tag in HIERS:
+        try:
+            r = S.post(f"{BASE}/api/visual/files/get-files", params={"api-version": "2.0"},
+                       json={"productIds": [pid], "hierarchyId": hid, "isBookmark": False}, timeout=60)
+        except Exception:
+            return None
+        if r.status_code != 200 or not r.json():
+            continue
+        for e in r.json():
+            if e.get("id") in seen:
+                continue
+            seen.add(e.get("id"))
+            if tag:
+                e = dict(e)
+                e["_tag"] = tag
+            out.append(e)
+    return out or None
+
 def main():
     skip_data = json.load(open(DATA / "cad_skip_list.json"))
     done = set(skip_data["done_files"])
@@ -67,6 +95,8 @@ def main():
                 return None
             m = re.search(r"filename=([^;]+)", r.headers.get("content-disposition", ""))
             fname = re.sub(r"[^A-Za-z0-9._-]+", "_", (m.group(1).strip().strip('"') if m else f"{it['id']}.stl"))
+            if it.get("_tag"):
+                fname = f"{it['_tag']}_{fname}"  # tránh trùng tên giữa các hierarchy
             p = tmp / f"{random.randint(10**5, 10**6-1)}_{fname}"
             p.write_bytes(r.content)
             return (carname, fname, p, len(r.content), {"part": it.get("partId"), "fid": it.get("id"), "name": it.get("name"), "label": it.get("label")})
@@ -78,7 +108,7 @@ def main():
             break
         pid, name = car["id"], car["name"]
         log(f"== {name} ==")
-        recs = get_files(pid)
+        recs = get_files_all(pid)
         if not recs:
             log("get-files error (403/token expired/no 3D) -> end session"); break
         seen, uniq = set(), []
@@ -89,11 +119,12 @@ def main():
         # dedup: by stored record ids AND by partId (older manifests stored partId only)
         done_ids = set(manifest_all.get(name, {}).get("ids", []))
         done_parts = set(e.get("part") for e in manifest_all.get(name, {}).get("files", []) if e.get("part"))
-        todo = [r for r in uniq if r["id"] not in done_ids and r.get("partId") not in done_parts]
+        todo = [r for r in uniq if r["id"] not in done_ids]  # bỏ dedupe partId: cùng part có thể có file ở nhiều hierarchy
         log(f"{len(uniq)} unique files, still to download: {len(todo)}")
         mf = manifest_all.setdefault(name, {"product": pid, "total_files": len(uniq),
-                                            "hierarchy": "00000003LSK4EU01 (3D AutoReverse)",
+                                            "hierarchy": "multi: AutoReverse+VOP+xEV+BIW+Chassis",
                                             "ids": list(done_ids), "files": []})
+        mf["total_files"] = len(uniq)  # cập nhật tổng thật (5 hierarchy) cho tracker
         n_ok = 0
         ex = ThreadPoolExecutor(2)  # 2 workers + 0.6s stagger ~ 1.3 files/s, ban-safe
         futs = [ex.submit(dl, it, name) for it in todo]
