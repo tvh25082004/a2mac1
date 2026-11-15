@@ -119,7 +119,10 @@ def main():
         # dedup: by stored record ids AND by partId (older manifests stored partId only)
         done_ids = set(manifest_all.get(name, {}).get("ids", []))
         done_parts = set(e.get("part") for e in manifest_all.get(name, {}).get("files", []) if e.get("part"))
-        todo = [r for r in uniq if r["id"] not in done_ids]  # bỏ dedupe partId: cùng part có thể có file ở nhiều hierarchy
+        # dedupe chính theo NAME (ổn định qua các phiên; server xoay file-id nên id cũ
+        # trong manifest không còn khớp API — VF6: ids 2303 nhưng chỉ 615 khớp) + id phòng hờ
+        done_names = {e.get("name") for e in manifest_all.get(name, {}).get("files", []) if e.get("name")}
+        todo = [r for r in uniq if r["id"] not in done_ids and r.get("name") not in done_names]
         log(f"{len(uniq)} unique files, still to download: {len(todo)}")
         mf = manifest_all.setdefault(name, {"product": pid, "total_files": len(uniq),
                                             "hierarchy": "multi: AutoReverse+VOP+xEV+BIW+Chassis",
