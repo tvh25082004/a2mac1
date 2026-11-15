@@ -4,10 +4,6 @@
   "name": "Onvo L60 60kWh 4X4 2024"
  },
  {
-  "id": "A000004QZ0HYEU01",
-  "name": "VinFast VF8 Plus 2023"
- },
- {
   "id": "A00000552G3KEU01",
   "name": "VinFast VF6 Plus 2024"
  },
@@ -2038,5 +2034,9 @@
  {
   "id": "A00000774YSREU01",
   "name": "Land Rover Range Rover Autobiography SWB PHEV 2025"
+ },
+ {
+  "id": "A000004QZ0HYEU01",
+  "name": "VinFast VF8 Plus 2023"
  }
 ]
