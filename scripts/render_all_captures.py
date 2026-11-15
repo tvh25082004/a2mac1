@@ -107,7 +107,8 @@ def main():
                 data = z.read(info)
                 inflight.append(pool.submit(render_one,
                                             (car_m, name, outpath, data)))
-                if len(inflight) >= 16:
+                del data  # STL xEV ~30-100MB: tra tu noi tham chieu cua main process som
+                if len(inflight) >= 4:  # 16 inflight x STL lon = OOM (sandbox ~2GB)
                     for fu in as_completed(inflight):
                         c, n, st, msg = fu.result()
                         done += (st == 'OK'); err += (st != 'OK')
