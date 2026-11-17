@@ -1,0 +1,131 @@
+{
+ "tests": [
+  {
+   "test": "A get-files BYD Tang L EV 2025",
+   "ok": true,
+   "info": "234 entries, exts={'(none)': 234}, image-entries=0"
+  },
+  {
+   "test": "A get-files VinFast VF8 Plus 2023",
+   "ok": true,
+   "info": "169 entries, exts={'(none)': 169}, image-entries=0"
+  },
+  {
+   "test": "A get-files Onvo L60 60kWh 4X4 2024",
+   "ok": true,
+   "info": "174 entries, exts={'(none)': 174}, image-entries=0"
+  },
+  {
+   "test": "A get-files Nissan Navara 2.3 Calibre V 7AT 2021",
+   "ok": true,
+   "info": "138 entries, exts={'(none)': 138}, image-entries=0"
+  },
+  {
+   "test": "B hier-parts BYD Tang L EV 2025",
+   "ok": true,
+   "info": "0 records"
+  },
+  {
+   "test": "B hier-parts VinFast VF8 Plus 2023",
+   "ok": true,
+   "info": "0 records"
+  },
+  {
+   "test": "B hier-parts Onvo L60 60kWh 4X4 2024",
+   "ok": true,
+   "info": "0 records"
+  },
+  {
+   "test": "B hier-parts Nissan Navara 2.3 Calibre V 7AT 2021",
+   "ok": true,
+   "info": "0 records"
+  },
+  {
+   "test": "D GET /api/visual/media?productId=A0000074SYPAEU01",
+   "ok": false,
+   "info": "HTTP 404, ct=, bytes=0, kind=None"
+  },
+  {
+   "test": "D GET /api/products/A0000074SYPAEU01/media",
+   "ok": false,
+   "info": "HTTP 404, ct=, bytes=0, kind=None"
+  },
+  {
+   "test": "D GET /api/media?productId=A0000074SYPAEU01",
+   "ok": false,
+   "info": "HTTP 404, ct=, bytes=0, kind=None"
+  },
+  {
+   "test": "D POST /api/visual/files/media-gallery",
+   "ok": false,
+   "info": "HTTP 404, ct=, bytes=0, kind=None"
+  }
+ ],
+ "images": [],
+ "measurements": {
+  "BYD Tang L EV 2025": {
+   "http": 200,
+   "n_records": 0,
+   "sample_keys": null,
+   "columns_sample": null,
+   "raw_first": null
+  },
+  "VinFast VF8 Plus 2023": {
+   "http": 200,
+   "n_records": 0,
+   "sample_keys": null,
+   "columns_sample": null,
+   "raw_first": null
+  },
+  "Onvo L60 60kWh 4X4 2024": {
+   "http": 200,
+   "n_records": 0,
+   "sample_keys": null,
+   "columns_sample": null,
+   "raw_first": null
+  },
+  "Nissan Navara 2.3 Calibre V 7AT 2021": {
+   "http": 200,
+   "n_records": 0,
+   "sample_keys": null,
+   "columns_sample": null,
+   "raw_first": null
+  }
+ },
+ "entry_schema": {
+  "car": "BYD Tang L EV 2025",
+  "keys": [
+   "id",
+   "token",
+   "name",
+   "completePlatformIdentifier",
+   "color",
+   "isTransparent",
+   "label",
+   "productId",
+   "partTypeId",
+   "partId",
+   "neighbourFileIds",
+   "versionIds",
+   "isDownloadable"
+  ],
+  "sample": {
+   "id": "A000009GJLPQEU01",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaY4UnoD2P8y0NNvYULNm84g%3D%3D",
+   "name": "000000AUWL3AEU02_1",
+   "completePlatformIdentifier": "6-4499-4487",
+   "color": "0xd0d1d1",
+   "isTransparent": false,
+   "label": "N.A",
+   "productId": "A0000074SYPAEU01",
+   "partTypeId": "000000AUWL59EU02",
+   "partId": "A000009GJMFCEU01",
+   "neighbourFileIds": [],
+   "versionIds": [
+    "HD",
+    "SD"
+   ],
+   "isDownloadable": true
+  }
+ }
+}

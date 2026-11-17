@@ -19,8 +19,13 @@ def parse_stl_bytes(data):
     if data[:5].lower() == b'solid' and b'facet' in data[:500]:
         raise ValueError('ascii stl')
     n = struct.unpack('<I', data[80:84])[0]
-    if n == 0 or len(data) < 84 + n * 50:
+    if n == 0:
         raise ValueError('bad/empty stl')
+    if len(data) < 84 + n * 50:  # truncated read (partial stream) -> use what we have
+        n = min(n, (len(data) - 84) // 50)
+    MAXF = 400_000  # giant STLs (100MB+): cap facets read into RAM, decimate step below still applies
+    if n > MAXF:
+        n = MAXF
     rec = np.frombuffer(data, dtype=np.uint8, count=n * 50, offset=84).reshape(n, 50)
     return rec[:, 12:48].copy().view('<f4').reshape(n, 3, 3).astype(np.float32)
 
@@ -104,7 +109,11 @@ def main():
                 if os.path.exists(outpath):
                     done += 1
                     continue
-                data = z.read(info)
+                with z.open(info) as _fzz:
+                    _head = _fzz.read(84)
+                    _n = struct.unpack('<I', _head[80:84])[0] if len(_head) == 84 else 0
+                    _cap = 84 + min(max(_n, 0), 400_000) * 50
+                    data = _head + _fzz.read(max(_cap - 84, 0))  # stream-read chi phan can (STL 472MB chi ~20MB RAM)
                 inflight.append(pool.submit(render_one,
                                             (car_m, name, outpath, data)))
                 del data  # STL xEV ~30-100MB: tra tu noi tham chieu cua main process som

@@ -1,0 +1,21 @@
+{
+ "searchable_properties_err": "JSONDecodeError('Expecting value: line 1 column 1 (char 0)')",
+ "hier_parts_parts-v1": {
+  "http": 200,
+  "top_keys": [
+   "head",
+   "rows",
+   "isPropertyListEmpty"
+  ],
+  "n_data": null
+ },
+ "hier_parts_parts-v2": {
+  "http": 200,
+  "top_keys": [
+   "head",
+   "rows",
+   "isPropertyListEmpty"
+  ],
+  "n_data": null
+ }
+}

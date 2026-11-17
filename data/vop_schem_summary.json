@@ -1,0 +1,168 @@
+{
+ "sae": {
+  "Exterior/Height|A2M-H113-1-Mass2 - Parking Clearance Height – Front - Mass2 [mm]|noscenario": "176.7",
+  "Exterior/Height|A2M-H113-2-Mass2 - Parking Clearance Height – Rear - Mass2 [mm]|noscenario": "222.4",
+  "Exterior/Height|A2M-H113-1-Mass3 - Parking Clearance Height – Front - Mass3 [mm]|noscenario": "183.4",
+  "Exterior/Height|A2M-H113-2-Mass3 - Parking Clearance Height – Rear - Mass3 [mm]|noscenario": "199.7",
+  "Exterior/Height|A2M-H113-1-Mass4 - Parking Clearance Height – Front - Mass4 [mm]|noscenario": "177.6",
+  "Exterior/Height|A2M-H113-2-Mass4 - Parking Clearance Height – Rear - Mass4 [mm]|noscenario": "234.2",
+  "Exterior/Height|A2M-H255 - Open Liftgate Height Clearance to Ground [mm]|noscenario": "2010.3",
+  "Exterior/Height|A2M-H256 - Pull Handle Height to Ground [mm]|noscenario": "1906.7",
+  "Exterior/Height|SAE-H100 - Vehicle Height - Body [mm]|noscenario": "1742.1",
+  "Exterior/Height|SAE-H101 - Vehicle Height - Maximum [mm]|noscenario": "1742.1",
+  "Exterior/Height|SAE-H110 - Vehicle Height - Rear Compartment Open [mm]|noscenario": "2130.4",
+  "Exterior/Height|SAE-H111-1 - Rocker Panel Height – Front [mm]|noscenario": "213.1",
+  "Exterior/Height|SAE-H111-2 - Rocker Panel Height – Rear [mm]|noscenario": "217.8",
+  "Exterior/Height|SAE-H113-1 - Parking Clearance Height - Front [mm]|noscenario": "180.2",
+  "Exterior/Height|SAE-H113-2 - Parking Clearance Height - Rear [mm]|noscenario": "240.9",
+  "Exterior/Height|SAE-H130-1 - Step Height - Front [mm]|noscenario": "490.9",
+  "Exterior/Height|SAE-H130-2 - Step Height - Second [mm]|noscenario": "493.6",
+  "Exterior/Height|SAE-H156 - Ground Clearance [mm]|noscenario": "196.4",
+  "Exterior/Height|SAE-H156-GVM - Ground Clearance - GVM [mm]|noscenario": "167.8",
+  "Exterior/Height|SAE-H196 - Lift In Height [mm]|noscenario": "809.1",
+  "Exterior/Height|SAE-H202 - Rear Opening Height [mm]|noscenario": "782.5",
+  "Exterior/Height|SAE-H251 - Open Liftgate Height to Ground [mm]|noscenario": "1880.0"
+ },
+ "tokens": [
+  {
+   "node": "Package Measurements",
+   "name": "Download",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAa5lweZdupulVfRal2iw1v3sEcoLAbPmviSMkVqehwF24zwdLT5cmK5Kl0JKLvClZTQb2ek7LG2R7a69qExKFXPjEG8eHQk7PCoTjmU%2FFad7Dtk23Bre6ZvbRMuv0NLMZfHuaP%2F6u0weCuUHQNRAblwddMSGsIih4HGMtJNUpvTCAh5LhWoGf6PlSkry%2Fz%2FUOPHq4UFMJqBisPbznQ2Jbh4Q%3D%3D",
+   "ext": "zip",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "Front Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaQquzmbCJfQnpBuJiQNfDqUjfIvzKi3CmSas3ujwoxTXsB%2FBcPxomGHN0Fua90xp5Rmy2%2FxPHc9zzwuO2ZnO3ehVk%2BTIvSdK7fJDrMk2I37ToDze7m0e6eAmJfy%2FBzkh02sQLLWK1LfpL1fEQTJC4zztbQIo3cpuYL4N%2FYKHs%2FbNonZbszjX%2Br7m7LNZYetSbQOOfq9ysxXN4V1uaGnr4wQ%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "Front Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaIc4byTKnfcg8bEc%2B8cgevpi6y3jGLl8CB97SIpZtRpq%2BQ2po%2FSAVFG3fFXTKPWf5ag2aVS1MEavPQFB6RYCmMRJLsg9QYKukIROGdFnFwFRRRUU5tx4JJugqF2%2FwB79QZhdsIkyv2i121WSutVWjXWgHyGK%2FAAYCLJVabM0eDsXKj9s4karns2APfHdjrN8zi3UxGeNrEpF0G0v%2B5BAyDw%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "Front Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaJNlzLmbWxlHdnLYwu%2FeAruRYSC7d5ohk3z22LGeirpRUEircwzsHRvdK28A3zaXNY4HZGly6fol6xuv08fae8cJU5WoNCy9ce0ohovr5P90A24ia8o2%2BDVGQ1pSlJwIL%2F2tj2QVpOhNTpj2VnpKtzb5Gvrij46nXcGIxv%2FCgHLxRqOO%2B2Jg2cBFZAoD%2BvhbES5HlnZc7UG1bWRpb2oFmzw%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "Front Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaDQB%2BSEdjA95Xsqlzduis2jVgPNKq4lZvRFh8w5OOSZ9QC8dwBsneepmY7hjohwcqHBZTrQRDFLpazPNAGeBcQjP5Y4AdNEbcDWutbUmiYgKM4yumLMzxV1ouboxfJyCifIigVR1HVeVt5fGiNJA0JvIp85Bk6JqRoXrmyQKiIptDhPeBcJ2ezJ%2FAzOQja78FwErAur15vmuDi19Lf8WbKQ%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "Front Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaF2Csju1HCKjCWCwNEPKZocV3IC0RoA2rBUkXSxWtuEdPdD8T5gGgXCmYRpvSGFXSX%2BvTC6xJpSt8AQk%2BtCV4vqOzAI5bZFqh8HJSfitLhOm9VhPZbmUKBw64d%2FpmXok7M9GrHOStuliHqS8BCByoAklEnU03ip0CyfAgjO41E0OSv6fB8lIE3GuR7vAaaVzoPQCu6w61xiXcoA8jsYRIjA%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "Front Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAa2igViTsPER9BsXh%2FUDHN3E35XwOYP5IqKvxHVlyNXc%2FYTecGY8%2B5esSDDfIv3jo9hfmyDb%2Bo8%2FzfNv%2BM6YP13ug6Vad6vFdC9rdwmeIoPpT705a2vpZsS%2BmZBzWiX5zUUHUXVNWFdSbX%2BB1kzyEcvcKyup0E%2BlU3QKkh5MWKxTheOGOB7gIW3%2FQZIr%2FmeQz152p0ve5FXGLu2B1sRtG8Sw%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaaVRNsRJgItzGhN0W3cR8FNJm8ILY1cUdGvo4ByfFnPTr%2BoV%2Fxfy9Hd8GZEbx8N%2BLkhM7bjPn%2FdP96TDc6doGJuptLSmtOjQf1eWRN2wARaqfC%2FIbM2dpM2a3WRbIQTFI1E2FoTmdVQUKGAotNX3NW0AHkzgv3DMQudz%2FOnxp5eOVRIH6Dm%2F5N9elgkk9y8Y6WhK%2FliPSyIJh1l3338LBpg%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaQb6Sf8tCYOwM4Yk5Zn3%2B%2BYYpw%2BNKUIIYEhr1%2FNNqJYDtB9slBvuQaeB5wTZa7RtswWEYfwTAqm2yba4%2B272w%2Fp15aP%2FgHxoRk56TSjgEsyGDFeQ4QKnENzapces90ZCODI3epQuSB%2F3Xma4iZfaz9poy2LpBGEzEX9Xuso%2BQW3s3kibTf5L2QldKdxLDXkwbM8YHgIIXLn04NKyFMyr0Vw%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaCAYm%2FGOhNuJP%2BRhTdXziJIkrVdQJRdr8xnf2ksCHv3qayip3XLIZPRH1%2FQH7sGujBhxH%2F1%2FxRYBFbWJa69vYHRuSFnlH6PEqoLDQia%2B0UJBsoajv3bw%2BjvQ1gr7%2B1vmpXsT4mXb7AV9yWxNPi0BHH53jZtpZwvvvO6Dti6MzjL5%2BjAGuIEDSL8kNN81T0pigTxxYZlor1OPGKZNgrplCQw%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAazzPKz63ciwWB7tzo3dUXSqDdokCSV%2Fwj633xRrEJyjqsR2ygPiolAy5fsPXzUTvwx567S1Xy4B8z38h9TW7je21LneUe27u%2Fw8rpQoKjxi56mfxUAjWxVljo36%2B1xZX4oE3VLe5dSbbBf%2FbFS314khTuRnurPr%2BRVYenSK%2BY7kolLXmDCWahhoy0TkbJCCO5f2fUm9lgllOtUNGKv7ZpvQ%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAavq8tUnT6FapYn9EHYYkNGdb1SgJWDIOAyYMu6J4oyFXGFe1qqLsgkgQxN0%2BxVWFvGJz9hcLt08MxwNlNVXydoz6MKgm%2F%2BM5qOUvZNUSxT5kuWBqD2GY5z4msoijkOLLzPcSOlmk9Mv6mCz5ks2P%2Fbs0gColTtmxEYyAB9qiFj8PrGSsXKHDMMM6%2FhmIeezgHeYeNbhEsT2IJPk8220FS0A%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaYb9wxoqiSxF2VC3iATkQI1uU%2BpzOlLnHmbUhI77xplnx6s6mFjndvqo%2B2rUiwYOFcNs8rx2%2FDcWnS4rOI%2FXsfkeWewwy%2F2MgZ3PajoioPlWtiBQeLLovSinarUSqOQGoe6Dr9V4DSn%2B%2FJaQoZsDXaY21YR%2BQaf4evjI%2F4rP4CxVY4cnCKSxJQyRDSZY%2Bzv9fudSVh%2Bw106aWsAjR%2B1jcbw%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAa0I2FCRZqA1LF8dMXUDs3sO56e6kke%2Bp7x3OHCkZm2Cexkf%2B2zjhg3HmH2et6OwF2oubkfBhhGpDPQtcZQwGNpGCm10QWx%2BfeCaeBHuj%2BV27L1AMoFBkofZ28Z1eiK4w36nK5Ttjn1RPBQdId98FMVQxpu5KniZn4mZ8t9r8sNa%2F3AQwazw%2BDvjJuSXCl5tcoV2Kp0CHMeK57lMr1nQl7RA%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaTdnHQEaSkxX2Jc5K8C78PL1qLa6nUr0qqmg0i67Z6Nuo3B%2F2Q%2BqnYpJ0nI6HB%2B9JjcGI20Svi%2B0QJgS%2BNgVWNH11Q2jGiagQhJTdGEUGb6ypTWGXtXvrS8W6fQMW0vfpRYC9AuscqyjaLQmrWodVRUu42AxaZ4Pai68aNqXrGXz5701yzSSnFVutP8WU%2BtIpaD7otP%2F0S4lbZ6TaYzxQDQ%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaVKePCTzPgITFzfVYoNnbHT4I%2Fv1PzgquZ%2FvLH4iS8GqUoyqFHq3XytoWOmxARC0falzQJLMLaYusgjOPp8aMQKgsYCl%2B6VqwGM4X5htVMwdzwDlBm6CMejjnGDc%2BbQpMZ2oPQVIjkctl6P%2Fh3vSOwLKeYZeO1IgcEKFqMyRNaL90EGyHy3dXdeeZhExcTUlCbO9pLVqFwY8LHDQZF77fzQ%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "2nd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaaUKLmMA3ydtBeOq4colNUboY8c2ZCAm0FcNsqFoS%2FRv0UXbDmbFMj1Uebm5RHoB9xLV2J1aUnU21o0fE0KDUMQnV7t7Lqj6d5LC8R1ZLoIVFYEI0asFC%2B9%2BYsDCBb8YDppE8JWru1xO7xJr9RIhuQ0%2F6HdMygX0gQCN7NiMzpkyyKbUk11SFDOYxuSr7vxJcumvH0TkNjXwTQxo1a3lGvQ%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "3rd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAahtE8Bq8XvaegJZd6DC%2F9zwfKhreD%2BAshsBGljtH43axUcF0SDqSbyoE9FxoFKXpRIrEH%2FmgbNGiCqqn5vuUNXqOP2bXKMtifNqKU7tM%2BvTIOkRL1RudBk4atpVCPknjD7OQOGIYGMNiF01ZvHjvs%2F%2BcUHAP8pF7sSgo1qP5A%2BH3EvhiNTKba9sjTUBo2QK6hyzvLN7OD6zSxKuHSlX%2BTmw%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "3rd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaKgocCN9fAeqNhhF5WAY1q0bYS2uvDVqHaxRNcoLIpYDiJEVZdX92lKKvHHrZ6tLYt8vYAzE%2BNffSPS%2FnU09njsvHUAqYXFGfukdg4NcPBUL4kDh7NTEBaq5%2B7K36CCJqrjaQPmMAkeoqdKXw%2BDMM3EYSgJ0CUjvcRP%2B5Jj3XlhPHyzbpG6lHH1pzgCLCZ0gpq3LE9J4OBiz%2FBvrHoMTrbw%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  },
+  {
+   "node": "Package Measurements",
+   "name": "3rd Row Manikin",
+   "token": "HJpFsZRzZ1%2BAn8MDZ3qyIDTOhnNA8isOc0HUghOEYJetxnwobJIsXgvyG2dFOiZZHLF1y9mifW6oD6Hosjiffim0HqiAONE0sAGOh97sdE0Vjfemr%2BTYnc93u%2BeSGmAaPqkGjNKcBkZgvgQU7Q63D1ZpG5vWaR4LSHWbLNi6joYu0pe5MqA83bYq52GShRRxC3hptzO2jQ%2BU1C867HyR9aj1OTOpbxF9sj%2F6uBizy4PwgUR1i6kxlEMhpYKXtjh45MZ3blzamOWFgItj4llKFA%2By2mC9Acmvc%2FyUJ5MF%2BQtz3EZp6%2FZUHv2r3bejL4O7QyzNBoVWwAXE2H036Dam6w%3D%3D",
+   "ext": "JPG",
+   "pub": null
+  }
+ ]
+}

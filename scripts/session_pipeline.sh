@@ -25,9 +25,13 @@ mf = json.load(open('data/cad_skip_list.json')).get('manifest', {})
 for name in sorted(mf): print(name.replace(' ', '__SP__'))"); do
   name="${car//__SP__/ }"
   fname="CAPTURES_${name// /_}.zip"
+  fname_alt="${fname//(/.}"; fname_alt="${fname_alt//)/.}"   # GitHub API doi ( ) -> . trong asset name
   if [ ! -f "download/$fname" ]; then
     echo "tai ve de merge: $fname"
     curl -sL --max-time 120 -o "download/$fname" "$REL_BASE/$fname" || true
+    if [ ! -s "download/$fname" ] || ! unzip -tq "download/$fname" >/dev/null 2>&1; then
+      curl -sL --max-time 120 -o "download/$fname" "$REL_BASE/$fname_alt" || true
+    fi
   fi
   if [ -f "download/$fname" ]; then
     echo "merge tu $fname -> $name"
