@@ -77,20 +77,34 @@ def short_header2(name):
     return f'{code} {rest}{unit}{mass}'
 
 # ---- media inventory (no token values) ---------------------------------------------
-media_rows = []
-n_by_kind = {'Schematic': 0, 'Front Manikin': 0, '2nd Row Manikin': 0, '3rd Row Manikin': 0, 'Download': 0}
+media_rows = []   # (node, ten gallery, dinh dang, kich thuoc MB hoac None)
 for t in tokens:
     nm, ext = t.get('name') or '?', (t.get('ext') or '?').lower()
-    n_by_kind[nm] = n_by_kind.get(nm, 0) + 1
-    media_rows.append((t.get('node'), nm, ext.upper()))
-# schematic files captured inside the Summary compare dump (6 entries "Schematic | files")
-n_schematic = sum(1 for _ in range(6))
+    media_rows.append((t.get('node'), nm, ext.upper(), None))
+# 6 Schematic PNG that su (node Summary, ten file 05..10, kich thuoc that tu API)
+j_sum = json.load(open(ROOT / 'data' / 'vop_cmp_00000004YO7QEU01.json'))
+pv_sum = (j_sum.get('values') or {}).get(BYD_PID) or {}
+sch_details = []
+for _propid, scen in pv_sum.items():
+    if isinstance(scen, dict):
+        for _s, entries in scen.items():
+            if isinstance(entries, list):
+                for e in entries:
+                    if (e.get('propertyName') or '') == 'Schematic':
+                        det = e.get('details') or {}
+                        if det.get('token'):
+                            sch_details.append((det.get('name') or 'x',
+                                                round((det.get('size') or 0) / 1e6, 2)))
 seq = {}
 file_names = []
-for node, nm, ext in media_rows:
+base = BYD_CAR.replace(' ', '_')
+for node, nm, ext, _mb in media_rows:
+    if nm == 'Download':
+        file_names.append(f'{base}_PackageDrawings.zip')
+        continue
     seq[nm] = seq.get(nm, 0) + 1
-    base = BYD_CAR.replace(' ', '_')
-    file_names.append(f"{base}_{nm.replace(' ', '-')}-{seq[nm] if nm != 'Download' else ''}.{ext.lower()}".replace('-.', '.'))
+    file_names.append(f'{base}_{nm.replace(" ", "-")}-{seq[nm]}.{ext.lower()}')
+sch_names = [f'{base}_Height-Schematic-{nm_s}.png' for nm_s, _mb in sch_details]
 
 # ---- catalogue status ----------------------------------------------------------------
 status_by_pid = {}
@@ -152,26 +166,27 @@ ws.sheet_view.zoomScale = 85
 
 # ========== Sheet 2: Media gallery inventory (BYD Tang) ==========
 ws2 = wb.create_sheet('Media Gallery - BYD Tang')
-ws2.cell(row=1, column=1, value='Media Gallery node "Package Measurements" — BYD Tang L EV 2025 (ảnh JPG theo yêu cầu A&U)').font = Font(bold=True, size=12)
-ws2.cell(row=2, column=1, value='Quy tắc đặt tên: Hãng_Model_Năm_Loại-đo.jpg. File sẽ được tải về khi có token mới và đính kèm release GitHub.').font = sub_font
-h2 = ['#', 'Node', 'Tên trong gallery', 'Định dạng', 'Tên file quy ước', 'Trạng thái']
+ws2.cell(row=1, column=1, value='Media Gallery → Measures — BYD Tang L EV 2025: 6 Schematic PNG (mục Height) + Manikin JPG + ZIP bản vẽ').font = Font(bold=True, size=12)
+ws2.cell(row=2, column=1, value='Quy tắc đặt tên: Hãng_Model_Năm_Mục-đo_số-thứ-tự. Ảnh render sẵn có logo A2Mac1 + tiêu đề "Vehicle Occupant Packaging – PACKAGE MEASUREMENTS"; số liệu trong ảnh KHÔNG cần OCR vì API trả text chính xác (đối chiếu 4/4 giá trị với ảnh mẫu).').font = sub_font
+h2 = ['#', 'Node', 'Tên trong gallery', 'Định dạng', 'Kích thước (MB)', 'Tên file quy ước', 'Trạng thái']
 for c, h in enumerate(h2, 1):
     cell = ws2.cell(row=4, column=c, value=h)
     cell.fill = h_fill; cell.font = h_font
 rr = 5
-for i, ((node, nm, ext), fname) in enumerate(zip(media_rows, file_names), 1):
-    for c, v in enumerate([i, node, nm, ext, fname, 'Chờ token mới để tải'], 1):
+# 6 Schematic PNG truoc (muc Height, goc: side view, rear view, cop, hoc banh...)
+for k, ((nm_s, mb), fname) in enumerate(zip(sch_details, sch_names), 1):
+    for c, v in enumerate([k, 'Summary (00000004YO7QEU01)', 'Schematic', 'PNG', mb, fname,
+                           'Chờ token mới — file token hết hạn cùng JWT (401)'], 1):
         cell = ws2.cell(row=rr, column=c, value=v)
         cell.border = thin
     rr += 1
-# 6 schematic files captured in the Summary node
-for k in range(1, 7):
-    for c, v in enumerate([len(media_rows) + k, 'Summary (00000004YO7QEU01)', 'Schematic', 'JPG/PNG',
-                           f'{BYD_CAR.replace(" ", "_")}_Schematic-{k}.jpg', 'Chờ token mới để tải'], 1):
+for (node, nm, ext, mb), fname in zip(media_rows, file_names):
+    for c, v in enumerate([rr - 4, node, nm, ext, mb, fname,
+                           'Chờ token mới — file token hết hạn cùng JWT (401)'], 1):
         cell = ws2.cell(row=rr, column=c, value=v)
         cell.border = thin
     rr += 1
-for c, w in zip(range(1, 7), [5, 26, 22, 10, 46, 24]):
+for c, w in zip(range(1, 8), [5, 26, 22, 10, 13, 46, 34]):
     ws2.column_dimensions[get_column_letter(c)].width = w
 
 # ========== Sheet 3: catalogue 621 cars ==========
@@ -218,10 +233,14 @@ lines = [
     ('Kết quả kiểm chứng trên API (phiên #15/#16, BYD Tang L EV 2025)', Font(bold=True, size=12)),
     ('1. Bảng số liệu "Measures" — LẤY ĐƯỢC dạng text: 37 giá trị SAE/A2M (node Summary) + 11 bản ghi chuẩn đo '
      '(SAE J1100 NOV2009, SAE J826 JUN2021, SAE J4004 AUG2008, GCIE 2019) qua POST /api/products/compare/hierarchy/…/data/by-products.', None),
-    ('2. Ảnh schematic + manikin — LẤY ĐƯỢC: 6 Schematic (JPG/PNG) + 19 Manikin JPG (Front ×6, 2nd Row ×10, 3rd Row ×3) '
-     '+ 1 ZIP bản vẽ package, tải qua GET /files/downloads/files?token=… (token ngắn hạn, cần phiên đăng nhập mới).', None),
-    ('3. So khớp ảnh chụp mẫu: SAE-H156-GVM = 167.8, SAE-H196 = 809.1, SAE-H202 = 782.5, SAE-H251 = 1880.0 — '
-     'trùng đúng 4 con số trong ảnh người dùng gửi.', None),
+    ('2. Ảnh Schematic render sẵn — LẤY ĐƯỢC: 6 ảnh PNG mục Height (tên nguồn 05–10, tổng ~13.7 MB; side view, rear view, '
+     'chi tiết cốp, hốc bánh...) + 19 Manikin JPG (Front ×6, 2nd Row ×10, 3rd Row ×3) + 1 ZIP bản vẽ package. '
+     'Ảnh có logo A2Mac1, tiêu đề "Vehicle Occupant Packaging – PACKAGE MEASUREMENTS", mã đo và giá trị vẽ sẵn trong ảnh.', None),
+    ('3. Số liệu KHÔNG cần OCR: giá trị text từ API trùng khớp 4/4 con số trong ảnh mẫu người dùng gửi '
+     '(H156-GVM=167.8, H196=809.1, H202=782.5, H251=1880.0).', None),
+    ('4. Đã thử tải lại 26 file bằng token lưu phiên trước → HTTP 401: token tải file hết hạn cùng JWT (~25–30 phút). '
+     'Vì vậy harvest + tải ảnh PHẢI chạy trong cùng phiên ngay khi có access_token mới (harvest_vop_all.py đã sửa để quét '
+     'cả node Summary — trước đó SÓT 6 ảnh Schematic).', None),
     ('', None),
     ('Cách hoàn thành cho 621 xe', Font(bold=True, size=12)),
     ('• Chạy scripts/harvest_vop_all.py (đã viết, có resume) khi có access_token mới: mỗi xe ~2–3s, quét toàn bộ node '

@@ -36,8 +36,8 @@ products = json.load(open("/home/z/my-project/data/products_all.json"))
 
 def safe_name(s): return re.sub(r"[^\w.-]+", "_", s).strip("_")[:80]
 
-# nodes duoc chon: cay "Package Measurements" toan bo + (du phong) 3D Data v3 gallery
-MEAS_ROOTS = {"000000093NWAEU01"}
+# nodes duoc chon: cay "Package Measurements" + node "Summary" (chua 6 Schematic PNG 05-10)
+MEAS_ROOTS = {"000000093NWAEU01", "00000004YO7QEU01"}
 
 def get_nodes(pid):
     r = S.post(f"{BASE}/api/visual/hierarchies/get-hierarchy-nodes",
@@ -110,6 +110,7 @@ for it in products:
         state["done"][pid] = {"car": car, "props": 0, "imgs": 0, "empty": True}
         n_done += 1; continue
     out = {"car": car, "pid": pid, "has_measurements": True, "nodes": {}, "media": []}
+    mseq = {}  # bo dem ten file theo (node, kind) dung quy uoc nguoi dung
     nprops = nimgs = 0
     blocked = False
     for nid in sorted(ids):
@@ -139,8 +140,14 @@ for it in products:
                     nrecs[f"{nm}|{scen}"] = {"value": e.get("formatedValue"), "unit": e.get("unitLabel")}
                     if tok:
                         ext = (det.get("extension") or "bin").lower()
-                        fkey = f"{nid}_{propid}_{scen}_{safe_name(nm)}"
-                        fpath = cdir / f"{fkey[:120]}.{ext}"
+                        # quy uoc ten file nguoi dung: Hang_Model_Nam_Muc-do_so-thu-tu.ext
+                        if nm == "Schematic" and det.get("name"):
+                            fname = f"{safe_name(car)}_Height-Schematic-{det.get('name')}.{ext}"
+                        else:
+                            kind = nm.replace(" ", "-")
+                            mseq[(nid, kind)] = mseq.get((nid, kind), 0) + 1
+                            fname = f"{safe_name(car)}_{kind}-{mseq[(nid, kind)]}.{ext}"
+                        fpath = cdir / fname
                         if not fpath.exists():
                             rr = dl_media(tok, fpath)
                             if rr != "OK":
