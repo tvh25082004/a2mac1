@@ -56,7 +56,38 @@ def code_of(name):
     num = int(idx.group(1)) if idx else 0
     return (std, base, num, mass, name)
 
-prop_names = sorted(values.keys(), key=code_of)
+# ---- harvested data tu cac luot chay harvest_vop_all.py (data/vop_harvest/<pid>.json)
+HARV = ROOT / 'data' / 'vop_harvest'
+harv_vals, harv_media, state_h = {}, {}, {}
+if HARV.exists():
+    for _f in sorted(HARV.glob('*.json')):
+        try:
+            jh = json.load(open(_f))
+        except Exception:
+            continue
+        if not jh.get('pid'):
+            continue
+        vals = {}
+        for _nid, nd in (jh.get('nodes') or {}).items():
+            for k, rec in (nd.get('values') or {}).items():
+                nm = k.split('|')[0]
+                if nm in JUNK_NAMES or rec.get('value') in (None, ''):
+                    continue
+                try:
+                    vals[nm] = float(rec['value'])
+                except (TypeError, ValueError):
+                    vals[nm] = rec['value']
+        if vals:
+            harv_vals[jh['pid']] = (jh.get('car'), vals)
+        harv_media[jh['pid']] = jh.get('media') or []
+_sf = ROOT / 'data' / 'vop_harvest_state.json'
+if _sf.exists():
+    state_h = json.load(open(_sf)).get('done', {})
+
+all_props = set(values.keys())
+for _car, vals in harv_vals.values():
+    all_props.update(vals.keys())
+prop_names = sorted(all_props, key=code_of)
 
 # simpler, robust header builder
 def short_header2(name):
@@ -107,9 +138,30 @@ for node, nm, ext, _mb in media_rows:
 sch_names = [f'{base}_Height-Schematic-{nm_s}.png' for nm_s, _mb in sch_details]
 
 # ---- catalogue status ----------------------------------------------------------------
+def media_counts(pid):
+    ms = harv_media.get(pid) or []
+    sch = sum(1 for m in ms if m.get('property') == 'Schematic')
+    man = sum(1 for m in ms if 'Manikin' in (m.get('property') or ''))
+    zp = sum(1 for m in ms if (m.get('ext') or '').lower() == 'zip')
+    return sch, man, zp
+
 status_by_pid = {}
-status_by_pid['A0000074SYPAEU01'] = ('PROBE OK', '37 giá trị SAE/A2M + 26 media (6 Schematic, 19 Manikin JPG, 1 ZIP)')
-status_by_pid['A000004QZ0HYEU01'] = ('CHỜ TOKEN', 'VF8 — API trả 403 tạm thời lúc probe, cần token mới để probe lại')
+if BYD_PID in harv_vals:
+    status_by_pid[BYD_PID] = ('HARVEST OK',
+                              f'{len(harv_vals[BYD_PID][1])} giá trị + {len(harv_media.get(BYD_PID) or [])} media đã tải')
+else:
+    status_by_pid[BYD_PID] = ('PROBE OK', '37 giá trị SAE/A2M + 26 media (6 Schematic, 19 Manikin JPG, 1 ZIP)')
+for _pid, rec in state_h.items():
+    if rec.get('empty'):
+        status_by_pid[_pid] = ('KHÔNG CÓ PM', 'Xe không có node Package Measurements trên A2MAC1')
+    elif _pid not in status_by_pid:
+        status_by_pid[_pid] = ('HARVEST OK', f"{rec.get('props', 0)} giá trị + {rec.get('imgs', 0)} media đã tải")
+for _pid in harv_vals:  # phòng khi state file thiếu nhưng JSON harvest có đủ
+    if _pid not in status_by_pid:
+        status_by_pid[_pid] = ('HARVEST OK',
+                               f'{len(harv_vals[_pid][1])} giá trị + {len(harv_media.get(_pid) or [])} media đã tải')
+if 'A000004QZ0HYEU01' not in status_by_pid:
+    status_by_pid['A000004QZ0HYEU01'] = ('CHỜ TOKEN', 'VF8 — API trả 403 tạm thời lúc probe, cần token mới để probe lại')
 
 # ---- workbook ------------------------------------------------------------------------
 thin = Border(*[Side(style='thin', color='B0B0B0')] * 4)
@@ -148,12 +200,31 @@ def car_row(r, car, pid, year, vals, sch, man, zipn, note, fill):
         if isinstance(v, float):
             cell.number_format = '0.0'
 
+def year_of(car):
+    m = re.search(r'(20\d{2})\s*$', car)
+    return int(m.group(1)) if m else ''
+
 r = HR + 1
-vals_byd = [values.get(n) for n in prop_names]
-car_row(r, BYD_CAR, BYD_PID, 2025, vals_byd, 6, 19, 1, 'Dữ liệu thật đã probe (phiên #15/#16)', ok_fill)
-r += 1
-car_row(r, 'VinFast VF8 Plus 2023', 'A000004QZ0HYEU01', 2023,
-        [None] * len(prop_names), None, None, None, 'Chờ token mới — API 403 tạm thời lúc probe', wait_fill)
+if harv_vals:
+    for p in products:
+        pid = p['productId']
+        if pid not in harv_vals:
+            continue
+        car, vals = harv_vals[pid]
+        s, m, z = media_counts(pid)
+        car_row(r, car, pid, year_of(car), [vals.get(n) for n in prop_names],
+                s or None, m or None, z or None, 'Harvest OK — ảnh trong download/VOP_media/', ok_fill)
+        r += 1
+    if BYD_PID not in harv_vals:  # giữ dòng probe BYD khi harvest chưa quét tới xe này
+        car_row(r, BYD_CAR, BYD_PID, 2025, [values.get(n) for n in prop_names],
+                6, 19, 1, 'Dữ liệu probe (phiên #15/#16) — chờ harvest chính thức', ok_fill)
+        r += 1
+else:
+    vals_byd = [values.get(n) for n in prop_names]
+    car_row(r, BYD_CAR, BYD_PID, 2025, vals_byd, 6, 19, 1, 'Dữ liệu thật đã probe (phiên #15/#16)', ok_fill)
+    r += 1
+    car_row(r, 'VinFast VF8 Plus 2023', 'A000004QZ0HYEU01', 2023,
+            [None] * len(prop_names), None, None, None, 'Chờ token mới — API 403 tạm thời lúc probe', wait_fill)
 last = r
 ws.freeze_panes = 'F6'
 ws.auto_filter.ref = f'A{HR}:{get_column_letter(len(HEAD))}{last}'
@@ -164,30 +235,76 @@ for c in range(6, len(HEAD) + 1):
     ws.column_dimensions[get_column_letter(c)].width = 13
 ws.sheet_view.zoomScale = 85
 
-# ========== Sheet 2: Media gallery inventory (BYD Tang) ==========
-ws2 = wb.create_sheet('Media Gallery - BYD Tang')
-ws2.cell(row=1, column=1, value='Media Gallery → Measures — BYD Tang L EV 2025: 6 Schematic PNG (mục Height) + Manikin JPG + ZIP bản vẽ').font = Font(bold=True, size=12)
-ws2.cell(row=2, column=1, value='Quy tắc đặt tên: Hãng_Model_Năm_Mục-đo_số-thứ-tự. Ảnh render sẵn có logo A2Mac1 + tiêu đề "Vehicle Occupant Packaging – PACKAGE MEASUREMENTS"; số liệu trong ảnh KHÔNG cần OCR vì API trả text chính xác (đối chiếu 4/4 giá trị với ảnh mẫu).').font = sub_font
-h2 = ['#', 'Node', 'Tên trong gallery', 'Định dạng', 'Kích thước (MB)', 'Tên file quy ước', 'Trạng thái']
-for c, h in enumerate(h2, 1):
-    cell = ws2.cell(row=4, column=c, value=h)
-    cell.fill = h_fill; cell.font = h_font
-rr = 5
-# 6 Schematic PNG truoc (muc Height, goc: side view, rear view, cop, hoc banh...)
-for k, ((nm_s, mb), fname) in enumerate(zip(sch_details, sch_names), 1):
-    for c, v in enumerate([k, 'Summary (00000004YO7QEU01)', 'Schematic', 'PNG', mb, fname,
-                           'Chờ token mới — file token hết hạn cùng JWT (401)'], 1):
-        cell = ws2.cell(row=rr, column=c, value=v)
-        cell.border = thin
-    rr += 1
-for (node, nm, ext, mb), fname in zip(media_rows, file_names):
-    for c, v in enumerate([rr - 4, node, nm, ext, mb, fname,
-                           'Chờ token mới — file token hết hạn cùng JWT (401)'], 1):
-        cell = ws2.cell(row=rr, column=c, value=v)
-        cell.border = thin
-    rr += 1
-for c, w in zip(range(1, 8), [5, 26, 22, 10, 13, 46, 34]):
-    ws2.column_dimensions[get_column_letter(c)].width = w
+# ========== Sheet 2: Media gallery inventory ==========
+if any(harv_media.values()):
+    ws2 = wb.create_sheet('Media Gallery')
+    ws2.cell(row=1, column=1, value='Media Gallery → Measures — toàn bộ ảnh Schematic/Manikin/ZIP đã tải về (download/VOP_media/<xe>/)').font = Font(bold=True, size=12)
+    ws2.cell(row=2, column=1, value='Quy tắc đặt tên: Hãng_Model_Năm_Mục-đo_số-thứ-tự. Ảnh render sẵn có logo A2Mac1 + tiêu đề "Vehicle Occupant Packaging – PACKAGE MEASUREMENTS".').font = sub_font
+    h2 = ['#', 'Xe', 'Node', 'Tên trong gallery', 'Định dạng', 'Tên file', 'Trạng thái']
+    for c, h in enumerate(h2, 1):
+        cell = ws2.cell(row=4, column=c, value=h)
+        cell.fill = h_fill; cell.font = h_font
+    rr = 5
+    n_i = 0
+    for p in products:
+        for mrec in (harv_media.get(p['productId']) or []):
+            n_i += 1
+            for c, v in enumerate([n_i, p['resourceName'], mrec.get('node_name'), mrec.get('property'),
+                                   (mrec.get('ext') or '').upper(), mrec.get('file'), 'Đã tải về'], 1):
+                cell = ws2.cell(row=rr, column=c, value=v)
+                cell.border = thin
+            rr += 1
+    ws2.freeze_panes = 'A5'
+    ws2.auto_filter.ref = f'A4:G{rr - 1}'
+    for c, w in zip(range(1, 8), [6, 34, 24, 20, 10, 46, 12]):
+        ws2.column_dimensions[get_column_letter(c)].width = w
+else:
+    ws2 = wb.create_sheet('Media Gallery - BYD Tang')
+    ws2.cell(row=1, column=1, value='Media Gallery → Measures — BYD Tang L EV 2025: 6 Schematic PNG (mục Height) + Manikin JPG + ZIP bản vẽ').font = Font(bold=True, size=12)
+    ws2.cell(row=2, column=1, value='Quy tắc đặt tên: Hãng_Model_Năm_Mục-đo_số-thứ-tự. Ảnh render sẵn có logo A2Mac1 + tiêu đề "Vehicle Occupant Packaging – PACKAGE MEASUREMENTS"; số liệu trong ảnh KHÔNG cần OCR vì API trả text chính xác (đối chiếu 4/4 giá trị với ảnh mẫu).').font = sub_font
+    h2 = ['#', 'Node', 'Tên trong gallery', 'Định dạng', 'Kích thước (MB)', 'Tên file quy ước', 'Trạng thái']
+    for c, h in enumerate(h2, 1):
+        cell = ws2.cell(row=4, column=c, value=h)
+        cell.fill = h_fill; cell.font = h_font
+    rr = 5
+    # 6 Schematic PNG truoc (muc Height, goc: side view, rear view, cop, hoc banh...)
+    for k, ((nm_s, mb), fname) in enumerate(zip(sch_details, sch_names), 1):
+        for c, v in enumerate([k, 'Summary (00000004YO7QEU01)', 'Schematic', 'PNG', mb, fname,
+                               'Chờ token mới — file token hết hạn cùng JWT (401)'], 1):
+            cell = ws2.cell(row=rr, column=c, value=v)
+            cell.border = thin
+        rr += 1
+    for (node, nm, ext, mb), fname in zip(media_rows, file_names):
+        for c, v in enumerate([rr - 4, node, nm, ext, mb, fname,
+                               'Chờ token mới — file token hết hạn cùng JWT (401)'], 1):
+            cell = ws2.cell(row=rr, column=c, value=v)
+            cell.border = thin
+        rr += 1
+    for c, w in zip(range(1, 8), [5, 26, 22, 10, 13, 46, 34]):
+        ws2.column_dimensions[get_column_letter(c)].width = w
+
+# ========== Sheet 2b: ảnh Schematic nhúng vào Excel (khi đã tải được file) ==========
+_pics = sorted((ROOT / 'download' / 'VOP_media').glob('*/BYD*Height-Schematic-*.png')) or \
+        sorted((ROOT / 'download' / 'VOP_media').glob('*/*Height-Schematic-*.png'))
+if _pics:
+    from openpyxl.drawing.image import Image as XLImage
+    from PIL import Image as PILImage
+    ws5 = wb.create_sheet('Ảnh Schematic (nhúng)')
+    ws5.cell(row=1, column=1, value='Ảnh Schematic mục Height nhúng trực tiếp (thumbnail — file gốc PNG đầy đủ trong download/VOP_media/).').font = Font(bold=True, size=12)
+    _thumbdir = ROOT / 'data' / 'tmp_thumbs'; _thumbdir.mkdir(exist_ok=True)
+    _arow = 3
+    for _png in _pics[:18]:
+        _im = PILImage.open(_png)
+        _im.thumbnail((460, 460))
+        _tp = _thumbdir / (_png.stem[:60] + '.jpg')
+        _im.convert('RGB').save(_tp, 'JPEG', quality=62)
+        _lbl = ws5.cell(row=_arow, column=1, value=f'{_png.parent.name} — {_png.name}')
+        _lbl.font = Font(bold=True, size=10)
+        _xi = XLImage(str(_tp))
+        _xi.anchor = f'A{_arow + 1}'
+        ws5.add_image(_xi)
+        _arow += 24
+    ws5.column_dimensions['A'].width = 70
 
 # ========== Sheet 3: catalogue 621 cars ==========
 ws3 = wb.create_sheet('Danh mục 621 xe')
@@ -199,8 +316,10 @@ for c, h in enumerate(h3, 1):
 rr = 4
 for i, p in enumerate(products, 1):
     st, note = status_by_pid.get(p['productId'], ('CHỜ TOKEN', 'Harvest theo lượt khi có access_token mới'))
-    if st == 'PROBE OK':
+    if st in ('PROBE OK', 'HARVEST OK'):
         fill = ok_fill
+    elif st == 'KHÔNG CÓ PM':
+        fill = PatternFill('solid', fgColor='E0E0E0')
     elif st == 'CHỜ TOKEN' and '403' in note:
         fill = wait_fill
     else:
@@ -264,5 +383,7 @@ for text, font in lines:
 ws4.column_dimensions['A'].width = 120
 
 wb.save(OUT)
+n_harv = len(harv_vals)
 print('SAVED', OUT)
-print('props:', len(prop_names), '| media rows:', len(media_rows) + 6, '| cars:', len(products))
+print('props:', len(prop_names), '| media rows:', len(media_rows) + 6, '| cars:', len(products),
+      '| harvested:', n_harv, '| state_h:', len(state_h))

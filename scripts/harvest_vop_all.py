@@ -18,7 +18,7 @@ VOP = "00000005ZT4GEU01"
 DATA = Path("/home/z/my-project/data/vop_harvest"); DATA.mkdir(parents=True, exist_ok=True)
 DL = Path("/home/z/my-project/download/VOP_media"); DL.mkdir(parents=True, exist_ok=True)
 STATE_F = Path("/home/z/my-project/data/vop_harvest_state.json")
-TIME_LIMIT = 3000  # an toan hon window token ~25-27p; dung khi gan het
+TIME_LIMIT = 1500  # token song ~25-27p: dung truoc khi token chet de kip save state
 
 _tokfile = Path("/tmp/a2mac1_tok")
 TOK = _tokfile.read_text().strip()
@@ -43,8 +43,8 @@ def get_nodes(pid):
     r = S.post(f"{BASE}/api/visual/hierarchies/get-hierarchy-nodes",
                json={"productIds": [pid], "hierarchyId": VOP, "filters": []}, timeout=60)
     time.sleep(0.45)
-    if r.status_code == 403:
-        return "403"
+    if r.status_code in (401, 403):
+        return "403"  # token het han (401) hoac bi block (403) -> dung toan bo luot
     if r.status_code != 200:
         return None
     return r.json()
@@ -75,7 +75,7 @@ def compare_node(pid, nid):
     r = S.post(f"{BASE}/api/products/compare/hierarchy/{VOP}/node/{nid}/data/by-products",
                params={"hideMappedProperties": "true"}, json=[pid], timeout=90)
     time.sleep(0.45)
-    if r.status_code == 403:
+    if r.status_code in (401, 403):
         return "403"
     if r.status_code != 200:
         return None

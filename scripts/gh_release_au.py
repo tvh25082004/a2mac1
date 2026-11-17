@@ -50,9 +50,14 @@ else:
     print("release created:", rel.get("id"), rel.get("html_url"))
 
 aup = f"https://uploads.github.com/repos/{USER}/{REPO}/releases/{rel['id']}/assets"
+files = ["/home/z/my-project/download/A2MAC1_AU_Package_Measurements.xlsx",
+         "/home/z/my-project/download/A2MAC1_Capture_Tracker_621.xlsx"]
+_zips = sorted(Path("/home/z/my-project/download").glob("VOP_media_*.zip"))
+if _zips:
+    files.append(str(_zips[-1]))
+    print("media zip:", _zips[-1].name)
 have = {a["name"] for a in requests.get(f"{api}/releases/{rel['id']}/assets", headers=H, timeout=30).json()}
-for f in ["/home/z/my-project/download/A2MAC1_AU_Package_Measurements.xlsx",
-          "/home/z/my-project/download/A2MAC1_Capture_Tracker_621.xlsx"]:
+for f in files:
     p = Path(f); name = p.name
     if name in have:
         requests.delete(f"{api}/releases/assets/" + str([a["id"] for a in requests.get(f"{api}/releases/{rel['id']}/assets", headers=H).json() if a["name"] == name][0]), headers=H)
